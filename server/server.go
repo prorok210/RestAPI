@@ -6,7 +6,6 @@ import (
 	"net"
 )
 
-
 type RequestHandler func(requestChan <-chan HttpRequest, responseChan chan<- []byte)
 
 
@@ -47,7 +46,7 @@ func Listen(listener *net.TCPListener, mainApplication RequestHandler){
 			requestChan := make(chan HttpRequest, CHANNEL_BUFSIZE)
 			responseChan := make(chan []byte, CHANNEL_BUFSIZE)
 			go handleConnection(clientConn, requestChan, responseChan)
-			go mainApplication((<-chan HttpRequest)(requestChan), (chan<- []byte)(responseChan))
+			go mainApplication(requestChan, responseChan)
 		} else {
 			log.Printf("Host: %s is not allowed\n", clientConn.RemoteAddr().String())
 			clientConn.Close()

@@ -2,37 +2,40 @@ package app
 
 import (
 	"RestAPI/server"
+	"context"
 	"log"
 	"time"
 )
 
-func MainApplication(requestChan <-chan server.HttpRequest, responseChan chan<- []byte) {
+func MainApplication(requestChan  <- chan server.HttpRequest, response chan <- []byte) {
+	
 	for {
+		ctx, cancel := context.WithTimeout(context.Background(), server.CONN_TIMEOUT * time.Second)
+		defer cancel()
+
 		select {
-		case request, ok := <-requestChan:
-			if !ok {
-				log.Println("Request channel closed, exiting MainApplication")
+		case request := <-requestChan:
+			log.Println(request)
+
+			resp := server.HttpResponse{
+				Version: "HTTP/1.1",
+				Status: 200,
+				Reason: "OK",
+				Headers: map[string]string{
+					"Content-Type": "text/plain",
+				},
+				Body: "Hello, World!",
+			}
+
+			select {
+			case response <- resp.ToBytes():
+				log.Println("Response sent to channel")
+			case <-ctx.Done():
+				log.Println("Response timeout")
 				return
 			}
-
-			response := server.HttpResponse{
-				Version: request.Version,
-				Status:  200,
-				Reason:  "OK",
-				Headers: make(map[string]string),
-				Body:    "Hello, World!",
-			}
-			response.Headers["Content-Type"] = "text/plain"
-			
-			select {
-			case responseChan <- response.ToBytes():
-				log.Println("Response sent successfully")
-			case <-time.After(time.Duration(server.RESP_TIMEOUT) * time.Second):
-				log.Println("Timeout sending response")
-			}
-
-		case <-time.After(time.Duration(server.RESP_TIMEOUT) * time.Second):
-			continue
+		default:
+			log.Println("No request received")
 		}
 	}
 }

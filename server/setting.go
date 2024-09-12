@@ -1,5 +1,8 @@
 package server
 
+import (
+	"time"
+)
 
 var ALLOWED_HOSTS = []string{
 	"localhost",
@@ -10,8 +13,8 @@ var ALLOWED_HOSTS = []string{
 const (
 	HOST string = "localhost"
 	PORT int = 8080
-	CONN_TIMEOUT int = 10
-	RESP_TIMEOUT int = 10
+	CONN_TIMEOUT time.Duration = 10
+	RESP_TIMEOUT time.Duration = 10
 	BUFSIZE int = 1024
 	CHANNEL_BUFSIZE int = 256
 )
