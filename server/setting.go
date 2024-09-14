@@ -34,7 +34,7 @@ var SUPPORTED_MEDIA_TYPES = []string{
 const (
 	HOST string = "localhost"
 	PORT int = 8081
-	CONN_TIMEOUT time.Duration = 10
+	CONN_TIMEOUT time.Duration = 20
 	BUFSIZE int = 2048
 )
 

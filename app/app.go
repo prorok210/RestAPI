@@ -6,20 +6,17 @@ package app
 
 import (
 	"RestAPI/server"
-	"strconv"
 )
 
 func MainApplication(request *server.HttpRequest) ([]byte, error) {
-		response := server.HttpResponse{
-			Version: "HTTP/1.1",
-			Status: 200,
-			Reason: "OK",
-			Headers: make(map[string]string),
-			Body: "Hello, World!",
-		}
+	view := router(request.Url)
 
-		response.Headers["Content-Type"] = "text/plain"
-		response.Headers["Content-Length"] = strconv.Itoa(len(response.Body))
+	if view == nil {	
+		return server.HTTP404.ToBytes(), nil
+	}
 
-		return response.ToBytes(), nil
+	response := view(*request)
+	
+
+	return response.ToBytes(), nil
 }

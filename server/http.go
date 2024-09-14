@@ -116,7 +116,6 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "4",
 		},
-		Body: "{OK}",
 	}
 
 	HTTP201 = HttpResponse{
@@ -127,7 +126,6 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "9",
 		},
-		Body: "{Created}",
 	}
 	HTTP202 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -137,7 +135,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "10",
 		},
-		Body: "{Accepted}",
+		Body: `{"Accepted"}`,
 	}
 	HTTP204 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -152,7 +150,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "13",
 		},
-		Body: "{Bad Request}",
+		Body: `{"Bad Request"}`,
 	}
 	HTTP401 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -162,7 +160,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "12",
 		},
-		Body: "{Unauthorized}",
+		Body: `{"Unauthorized"}`,
 	}
 	HTTP403 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -172,7 +170,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "9",
 		},
-		Body: "{Forbidden}",
+		Body: `{"Forbidden"}`,
 	}
 	HTTP404 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -182,7 +180,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "9",
 		},
-		Body: "{Not Found}",
+		Body: `{"Not Found"}`,
 	}
 	HTTP405 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -192,7 +190,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "18",
 		},
-		Body: "{Method Not Allowed}",
+		Body: `{"Method Not Allowed"}`,
 	}
 	HTTP408 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -202,7 +200,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "15",
 		},
-		Body: "{Request Timeout}",
+		Body: `{"Request Timeout"}`,
 	}
 	HTTP411 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -212,7 +210,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "15",
 		},
-		Body: "{Length Required}",
+		Body: `{"Length Required"}`,
 	}
 	HTTP415 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -222,7 +220,7 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "24",
 		},
-		Body: "{Unsupported Media Type}",
+		Body: `{"Unsupported Media Type"}`,
 	}
 	HTTP500 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -232,6 +230,6 @@ var (
 			"Content-Type": "application/json",
 			"Content-Length": "23",
 		},
-		Body: "{Internal Server Error}",
+		Body: `{"Internal Server Error"}`,
 	}
 )

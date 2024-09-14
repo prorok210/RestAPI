@@ -13,6 +13,8 @@ func main() {
 		fmt.Println("Error creating server", er)
 		return
 	}
+	
+	app.InitViews()
 
 	er = serv.Start()
 	if er != nil {

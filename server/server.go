@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -100,7 +101,7 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 			continue
 		}
 
-		er = middleware(request, clientConn)
+		er = reqMiddleware(request, clientConn)
 		if er != nil {
 			log.Println("Error in middleware", er)
 			return
@@ -112,18 +113,22 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 			clientConn.Write(HTTP500.ToBytes())
 			continue
 		}
+		fmt.Println("Response: ", string(response))
 
-		_, er = clientConn.Write(response)
-		if er != nil {
-			if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
-				log.Println("Write timeout", netErr)
+		go func() {
+			_, er = clientConn.Write(response)
+			if er != nil {
+				if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
+					log.Println("Write timeout", netErr)
+					clientConn.Write(HTTP408.ToBytes())
+					return
+				}
+				log.Println("Error writing response", er)
 				return
+			} else {
+				log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
 			}
-			log.Println("Error writing response", er)
-			continue
-		} else {
-			log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
-		}
+		}()
 		
 		er = keepAliveMiddleware(request, clientConn)
 		if er != nil {
@@ -143,7 +148,7 @@ func isAllowedHostMiddleware(clientAddr string) bool {
 	return false
 }
 
-func middleware(request *HttpRequest, clientConn net.Conn ) (error) {
+func reqMiddleware(request *HttpRequest, clientConn net.Conn ) (error) {
 
 	methodFlag := false
 	for _, allowedMethod := range ALLOWED_METHODS {
@@ -175,17 +180,17 @@ func middleware(request *HttpRequest, clientConn net.Conn ) (error) {
 
 	contentLengthFlag := false
 	contentLengthStr := request.Headers["Content-Length"]
-	if contentLengthStr != "" && len(request.Body) > 0 {
+	if contentLengthStr != "0" && len(request.Body) > 0 {
 		contentLength, err := strconv.Atoi(contentLengthStr)
 		if err != nil {
 			log.Println("Invalid Content-Length:", contentLengthStr)
 		} else {
-			if contentLength == len([]byte(request.Body)) {
+			if contentLength == len(request.Body) {
 				contentLengthFlag = true
 			}
 		}
 	}
-	if contentLengthStr == "" && len(request.Body) == 0 {
+	if contentLengthStr == "0" && len(request.Body) == 0 {
 		contentLengthFlag = true
 	}
 	if !contentLengthFlag {
