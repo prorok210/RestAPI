@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-
+/*
+	Структуры для работы с HTTP-запросами и ответами
+*/
 type HttpRequest struct {
 	Method string
 	Url string
@@ -24,6 +26,13 @@ type HttpResponse struct {
 	Body string
 }
 
+/*
+	Методы для работы с HTTP-запросами и ответами
+	ParseRequest() - разбор HTTP-запроса из байтового массива в структуру HttpRequest, возвращает ошибку в случае некоретного запроса
+	ToString() - преобразование HTTP-запроса в строку
+	ToBytes() - преобразование HTTP-ответа в байтовый массив для отправки по сети
+	SetHeader() - установка заголовка в HTTP-ответе
+*/
 
 func (rqst *HttpRequest) ParseRequest(buffer []byte) (error) {
 	if len(buffer) == 0 {
@@ -90,3 +99,139 @@ func (resp *HttpResponse) ToString() string {
 func (resp *HttpResponse) ToBytes() []byte {
 	return []byte(resp.ToString())
 }
+
+func (resp *HttpResponse) SetHeader(key, value string) {
+	resp.Headers[key] = value
+}
+
+/*
+	Стандартные HTTP-ответы
+*/
+var (
+	HTTP200 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 200,
+		Reason: "OK",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "4",
+		},
+		Body: "{OK}",
+	}
+
+	HTTP201 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 201,
+		Reason: "Created",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "9",
+		},
+		Body: "{Created}",
+	}
+	HTTP202 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 202,
+		Reason: "Accepted",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "10",
+		},
+		Body: "{Accepted}",
+	}
+	HTTP204 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 204,
+		Reason: "No Content",
+	}
+	HTTP400 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 400,
+		Reason: "Bad Request",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "13",
+		},
+		Body: "{Bad Request}",
+	}
+	HTTP401 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 401,
+		Reason: "Unauthorized",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "12",
+		},
+		Body: "{Unauthorized}",
+	}
+	HTTP403 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 403,
+		Reason: "Forbidden",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "9",
+		},
+		Body: "{Forbidden}",
+	}
+	HTTP404 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 404,
+		Reason: "Not Found",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "9",
+		},
+		Body: "{Not Found}",
+	}
+	HTTP405 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 405,
+		Reason: "Method Not Allowed",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "18",
+		},
+		Body: "{Method Not Allowed}",
+	}
+	HTTP408 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 408,
+		Reason: "Request Timeout",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "15",
+		},
+		Body: "{Request Timeout}",
+	}
+	HTTP411 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 411,
+		Reason: "Length Required",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "15",
+		},
+		Body: "{Length Required}",
+	}
+	HTTP415 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 415,
+		Reason: "Unsupported Media Type",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "24",
+		},
+		Body: "{Unsupported Media Type}",
+	}
+	HTTP500 = HttpResponse{
+		Version: "HTTP/1.1",
+		Status: 500,
+		Reason: "Internal Server Error",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Content-Length": "23",
+		},
+		Body: "{Internal Server Error}",
+	}
+)

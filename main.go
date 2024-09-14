@@ -4,14 +4,20 @@ import (
 	"RestAPI/app"
 	"RestAPI/server"
 	"fmt"
+	"log"
 )
 
 func main() {
-	listener, er := server.StartServer()
+	serv, er := server.CreateServer(app.MainApplication)
 	if er != nil {
-		fmt.Println(er)
+		fmt.Println("Error creating server", er)
 		return
 	}
 
-	server.Listen(listener, app.MainApplication)
-}
+	er = serv.Start()
+	if er != nil {
+		log.Println("Error starting server", er)
+		return
+	}
+	select {}
+}	
