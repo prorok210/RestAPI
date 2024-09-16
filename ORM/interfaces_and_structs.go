@@ -4,15 +4,80 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
+
+type Cell interface {
+	ToFields() ([]interface{}, []string) // Метод для получения значений и колонок для вставки
+}
 
 type BaseModel struct {
 	TableName string
 }
 
-func (table *BaseModel) GetAll(conn *pgx.Conn) {
+// Таблицы
+type TableUsers struct {
+	BaseModel
+}
+
+type User struct {
+	Name  string
+	Email string
+}
+
+func (u *User) ToFields() ([]interface{}, []string) {
+	return []interface{}{u.Name, u.Email}, []string{"name", "email"}
+}
+
+type TableDialogs struct {
+	BaseModel
+}
+
+type Dialog struct {
+	name string
+}
+
+// Функция делает conn глобальным для пакета
+func InitDB() {
+
+	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
+	fmt.Println(conn)
+	if InitDBError != nil {
+		log.Fatalf("Ошибка подключения к БД: %v", InitDBError)
+	}
+
+	fmt.Println("Успешное подключение к PostgreSQL через pgx!")
+
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS users (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(50),
+		email VARCHAR(50)
+	);`
+
+	// Выполняем запрос создания таблицы
+	_, err := conn.Exec(context.Background(), createTableSQL)
+	if err != nil {
+		log.Fatalf("Ошибка создания таблицы: %v", err)
+	} else {
+		fmt.Println("Таблица users успешно создана или уже существует.")
+	}
+
+	// SQL-запрос для вставки строки в таблицу
+	insertSQL := `
+	INSERT INTO users (name, email) VALUES ($1, $2);
+	`
+
+	// Вставляем строки
+	_, err = conn.Exec(context.Background(), insertSQL, "Иван Иванов", "ivan@example.com")
+	_, err = conn.Exec(context.Background(), insertSQL, "Петр Петров", "petr@example.com")
+	_, err = conn.Exec(context.Background(), insertSQL, "Сидор Сидоров", "sidor@example.com")
+}
+
+func (table *BaseModel) GetAll() {
+	fmt.Println(conn)
 	selectSQL := fmt.Sprintf(`SELECT id, name, email FROM %s;`, table.TableName)
 	fmt.Println(selectSQL)
 	rows, err := conn.Query(context.Background(), selectSQL)
@@ -44,16 +109,26 @@ func (table *BaseModel) GetAll(conn *pgx.Conn) {
 	}
 }
 
-// Таблицы
-type TableUsers struct {
-	BaseModel
-}
+func (table *BaseModel) Create(cell Cell) {
 
-type User struct {
-	name  string
-	email string
-}
+	values, columns := cell.ToFields() // Получаем поля и их значения
+	// SQL-запрос для вставки строки в таблицу
+	if table.TableName == "users" {
+		// Преобразуем срез названий колонок в строку для SQL-запроса
+		columnsStr := "(" + strings.Join(columns, ", ") + ")"
 
-type TableDialogs struct {
-	BaseModel
+		// Создаем плейсхолдеры для значений ($1, $2, ...)
+		placeholders := make([]string, len(values))
+		for i := range placeholders {
+			placeholders[i] = fmt.Sprintf("$%d", i+1)
+		}
+		placeholdersStr := "(" + strings.Join(placeholders, ", ") + ")"
+		insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, table.TableName, columnsStr, placeholdersStr)
+		// Вставляем строки
+		_, err := conn.Exec(context.Background(), insertSQL, values...)
+		if err != nil {
+			log.Fatalf("Ошибка вставки строки: %v", err)
+		}
+		fmt.Println("Строка успешно добавлена. Запрос:", insertSQL)
+	}
 }
