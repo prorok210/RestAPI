@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -27,8 +28,37 @@ type User struct {
 	Email string
 }
 
+// Общая функция для извлечения полей
+func extractFields(obj interface{}) ([]interface{}, []string) {
+	val := reflect.ValueOf(obj).Elem()
+	typ := reflect.TypeOf(obj).Elem()
+
+	var values []interface{}
+	var columns []string
+
+	// Проходим по полям структуры
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldName := field.Name
+
+		// Пропускаем поле с именем "ID"
+		if fieldName == "ID" {
+			continue
+		}
+
+		// Добавляем имя поля в список колонок
+		columns = append(columns, fieldName)
+
+		// Добавляем значение поля в список значений
+		values = append(values, val.Field(i).Interface())
+	}
+
+	return values, columns
+}
+
+// Реализуем интерфейс Cell для User
 func (u *User) ToFields() ([]interface{}, []string) {
-	return []interface{}{u.Name, u.Email}, []string{"name", "email"}
+	return extractFields(u) // Вызов общей функции
 }
 
 type TableDialogs struct {
@@ -112,23 +142,22 @@ func (table *BaseModel) GetAll() {
 func (table *BaseModel) Create(cell Cell) {
 
 	values, columns := cell.ToFields() // Получаем поля и их значения
-	// SQL-запрос для вставки строки в таблицу
-	if table.TableName == "users" {
-		// Преобразуем срез названий колонок в строку для SQL-запроса
-		columnsStr := "(" + strings.Join(columns, ", ") + ")"
 
-		// Создаем плейсхолдеры для значений ($1, $2, ...)
-		placeholders := make([]string, len(values))
-		for i := range placeholders {
-			placeholders[i] = fmt.Sprintf("$%d", i+1)
-		}
-		placeholdersStr := "(" + strings.Join(placeholders, ", ") + ")"
-		insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, table.TableName, columnsStr, placeholdersStr)
-		// Вставляем строки
-		_, err := conn.Exec(context.Background(), insertSQL, values...)
-		if err != nil {
-			log.Fatalf("Ошибка вставки строки: %v", err)
-		}
-		fmt.Println("Строка успешно добавлена. Запрос:", insertSQL)
+	fmt.Println("Значения:", values, "Колонки:", columns)
+
+	columnsStr := "(" + strings.Join(columns, ", ") + ")"
+
+	// Создаем плейсхолдеры для значений ($1, $2, ...)
+	placeholders := make([]string, len(values))
+	for i := range placeholders {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
 	}
+	placeholdersStr := "(" + strings.Join(placeholders, ", ") + ")"
+	insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, table.TableName, columnsStr, placeholdersStr)
+	// Вставляем строки
+	_, err := conn.Exec(context.Background(), insertSQL, values...)
+	if err != nil {
+		log.Fatalf("Ошибка вставки строки: %v", err)
+	}
+	fmt.Println("Строка успешно добавлена. Запрос:", insertSQL)
 }
