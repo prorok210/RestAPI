@@ -12,8 +12,8 @@ func main() {
 	// Либо сделать conn отдельным полем BaseModel
 	users.GetAll()
 	testUser := User{
-		Name:  "Иннокентий1 Лельков",
-		Email: "keshalelkov1@gmail.com",
+		Name:  "Александр Лельков",
+		Email: "alekslelkov@gmail.com",
 	}
 	users.Create(&testUser)
 	users.GetAll()

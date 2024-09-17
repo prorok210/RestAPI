@@ -10,22 +10,9 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Cell interface {
-	ToFields() ([]interface{}, []string) // Метод для получения значений и колонок для вставки
-}
-
-type BaseModel struct {
-	TableName string
-}
-
-// Таблицы
-type TableUsers struct {
-	BaseModel
-}
-
-type User struct {
-	Name  string
-	Email string
+// Реализуем интерфейс Cell для User
+func (u *User) ToFields() ([]interface{}, []string) {
+	return extractFields(u) // Вызов общей функции
 }
 
 // Общая функция для извлечения полей
@@ -56,20 +43,7 @@ func extractFields(obj interface{}) ([]interface{}, []string) {
 	return values, columns
 }
 
-// Реализуем интерфейс Cell для User
-func (u *User) ToFields() ([]interface{}, []string) {
-	return extractFields(u) // Вызов общей функции
-}
-
-type TableDialogs struct {
-	BaseModel
-}
-
-type Dialog struct {
-	name string
-}
-
-// Функция делает conn глобальным для пакета
+// Инициализация БД
 func InitDB() {
 
 	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
@@ -107,30 +81,39 @@ func InitDB() {
 }
 
 func (table *BaseModel) GetAll() {
-	fmt.Println(conn)
-	selectSQL := fmt.Sprintf(`SELECT id, name, email FROM %s;`, table.TableName)
-	fmt.Println(selectSQL)
+	selectSQL := fmt.Sprintf(`SELECT * FROM %s;`, table.TableName)
 	rows, err := conn.Query(context.Background(), selectSQL)
 	if err != nil {
 		log.Fatalf("Ошибка выполнения SELECT: %v", err)
 	}
 	defer rows.Close()
 
-	fmt.Println("Данные из таблицы users:")
+	// Получаем описание полей (столбцов)
+	fieldDescriptions := rows.FieldDescriptions()
 
-	// Итерируем по строкам и выводим данные
+	// Создаем срез для хранения значений каждой строки
+	values := make([]interface{}, len(fieldDescriptions))
+	valuePtrs := make([]interface{}, len(fieldDescriptions))
+
+	// Итерируем по строкам
 	for rows.Next() {
-		var id int
-		var name, email string
+		// Заполняем valuePtrs указателями на значения
+		for i := range fieldDescriptions {
+			valuePtrs[i] = &values[i]
+		}
 
-		// Считываем данные каждой строки
-		err := rows.Scan(&id, &name, &email)
+		// Сканируем строку
+		err := rows.Scan(valuePtrs...)
 		if err != nil {
 			log.Fatalf("Ошибка сканирования строки: %v", err)
 		}
 
 		// Выводим данные строки
-		fmt.Printf("ID: %d, Name: %s, Email: %s\n", id, name, email)
+		fmt.Println("Данные строки:")
+		for i, fd := range fieldDescriptions {
+
+			fmt.Printf("%s: %v\n", string(fd.Name), values[i])
+		}
 	}
 
 	// Проверка на ошибки после завершения итерации
