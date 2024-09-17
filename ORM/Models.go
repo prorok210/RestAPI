@@ -1,29 +1,26 @@
 package main
 
-// Интерфейс для строк из таблиц
-type Cell interface {
-	ToFields() ([]interface{}, []string) // Метод для получения значений и колонок для вставки
+// Объект из таблицы пользователей
+type User struct {
+	TableName string
+	// ID        uint сделать функцию для получения последнего ID
+	Name  string
+	Email string
 }
 
 // Базовая модель таблицы
-type BaseModel struct {
+type BaseTable struct {
 	TableName string
 }
 
 // Таблица пользователей
 type TableUsers struct {
-	BaseModel
-}
-
-// Объект из таблицы пользователей
-type User struct {
-	Name  string
-	Email string
+	BaseTable
 }
 
 // Таблица диалогов
 type TableDialogs struct {
-	BaseModel
+	BaseTable
 }
 
 // Объект из таблицы диалогов

@@ -10,13 +10,19 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Реализуем интерфейс Cell для User
-func (u *User) ToFields() ([]interface{}, []string) {
-	return extractFields(u) // Вызов общей функции
+// Конструктор для структуры User
+func newUser(name string, email string) *User {
+	fmt.Println("Создан новый пользователь:", name, email)
+	return &User{
+		TableName: "users",
+		Name:      name,
+		Email:     email,
+	}
 }
 
 // Общая функция для извлечения полей
 func extractFields(obj interface{}) ([]interface{}, []string) {
+	fmt.Println("Извлечение полей из объекта:", obj)
 	val := reflect.ValueOf(obj).Elem()
 	typ := reflect.TypeOf(obj).Elem()
 
@@ -39,7 +45,7 @@ func extractFields(obj interface{}) ([]interface{}, []string) {
 		// Добавляем значение поля в список значений
 		values = append(values, val.Field(i).Interface())
 	}
-
+	fmt.Println("данные о пользователе успешно отправлены")
 	return values, columns
 }
 
@@ -80,7 +86,7 @@ func InitDB() {
 	_, err = conn.Exec(context.Background(), insertSQL, "Сидор Сидоров", "sidor@example.com")
 }
 
-func (table *BaseModel) GetAll() {
+func (table *BaseTable) GetAll() {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s;`, table.TableName)
 	rows, err := conn.Query(context.Background(), selectSQL)
 	if err != nil {
@@ -120,13 +126,16 @@ func (table *BaseModel) GetAll() {
 	if rows.Err() != nil {
 		log.Fatalf("Ошибка обработки строк: %v", rows.Err())
 	}
+	// Сделать return нужных структур, не забыть про поле tableName
 }
 
-func (table *BaseModel) Create(cell Cell) {
-
-	values, columns := cell.ToFields() // Получаем поля и их значения
-
-	fmt.Println("Значения:", values, "Колонки:", columns)
+func Create(obj interface{}) {
+	fmt.Println("CREATE", obj)
+	values, columns := extractFields(obj)                 // Получаем поля и их значения
+	fmt.Println("Значения:", values, "Колонки:", columns) // Выводим их на экран
+	columns = columns[1:]                                 // Получаем имя таблицы
+	tableName, values := values[0], values[1:]            // Получаем значения
+	fmt.Println("Имя таблицы:", tableName)                // Выводим его на экран
 
 	columnsStr := "(" + strings.Join(columns, ", ") + ")"
 
@@ -136,7 +145,7 @@ func (table *BaseModel) Create(cell Cell) {
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
 	}
 	placeholdersStr := "(" + strings.Join(placeholders, ", ") + ")"
-	insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, table.TableName, columnsStr, placeholdersStr)
+	insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, tableName, columnsStr, placeholdersStr)
 	// Вставляем строки
 	_, err := conn.Exec(context.Background(), insertSQL, values...)
 	if err != nil {

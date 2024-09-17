@@ -1,20 +1,19 @@
 package main
 
-import "context"
+import (
+	"context"
+)
 
 func main() {
 	// Таблицу в объект языка
 	InitDB()
 	defer conn.Close(context.Background())
-	users := &TableUsers{BaseModel{TableName: "users"}}
+	users := &TableUsers{BaseTable{TableName: "users"}}
 
 	// когда появится метод Create, тогда не нужно будет передавать conn
 	// Либо сделать conn отдельным полем BaseModel
 	users.GetAll()
-	testUser := User{
-		Name:  "Александр Лельков",
-		Email: "alekslelkov@gmail.com",
-	}
-	users.Create(&testUser)
+	user := newUser("Василий Пупкинн", "vvasyapypkin@gmail.com")
+	Create(user)
 	users.GetAll()
 }
