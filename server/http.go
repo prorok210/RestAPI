@@ -114,8 +114,9 @@ var (
 		Reason: "OK",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "4",
+			"Content-Length": strconv.Itoa(len(`{"Status": "OK"}`)),
 		},
+		Body: `{"Status": "OK"}`,
 	}
 
 	HTTP201 = HttpResponse{
@@ -124,8 +125,9 @@ var (
 		Reason: "Created",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "9",
+			"Content-Length": strconv.Itoa(len(`{"Status": Created"}`)),
 		},
+		Body: `{"Status": Created"}`,
 	}
 	HTTP202 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -133,9 +135,9 @@ var (
 		Reason: "Accepted",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "10",
+			"Content-Length": strconv.Itoa(len(`{"Status": "Accepted"}`)),
 		},
-		Body: `{"Accepted"}`,
+		Body: `{"Status": "Accepted"}`,
 	}
 	HTTP204 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -148,9 +150,9 @@ var (
 		Reason: "Bad Request",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "13",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Bad Request"}`)),
 		},
-		Body: `{"Bad Request"}`,
+		Body: `{"Message": "Bad Request"}`,
 	}
 	HTTP401 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -158,9 +160,9 @@ var (
 		Reason: "Unauthorized",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "12",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Unauthorized"}`)),
 		},
-		Body: `{"Unauthorized"}`,
+		Body: `{"Message": "Unauthorized"}`,
 	}
 	HTTP403 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -168,9 +170,9 @@ var (
 		Reason: "Forbidden",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "9",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Forbidden"}`)),
 		},
-		Body: `{"Forbidden"}`,
+		Body: `{"Message": "Forbidden"}`,
 	}
 	HTTP404 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -178,9 +180,9 @@ var (
 		Reason: "Not Found",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "9",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Not Found"}`)),
 		},
-		Body: `{"Not Found"}`,
+		Body: `{"Message": "Not Found"}`,
 	}
 	HTTP405 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -188,9 +190,9 @@ var (
 		Reason: "Method Not Allowed",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "18",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Method Not Allowed"}`)),
 		},
-		Body: `{"Method Not Allowed"}`,
+		Body: `{"Message": "Method Not Allowed"}`,
 	}
 	HTTP408 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -198,9 +200,9 @@ var (
 		Reason: "Request Timeout",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "15",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Request Timeout"}`)),
 		},
-		Body: `{"Request Timeout"}`,
+		Body: `{"Message": "Request Timeout"}`,
 	}
 	HTTP411 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -208,9 +210,9 @@ var (
 		Reason: "Length Required",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "15",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Length Required"}`)),
 		},
-		Body: `{"Length Required"}`,
+		Body: `{"Message": "Length Required"}`,
 	}
 	HTTP415 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -218,9 +220,9 @@ var (
 		Reason: "Unsupported Media Type",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "24",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Unsupported Media Type"}`)),
 		},
-		Body: `{"Unsupported Media Type"}`,
+		Body: `{"Message": "Unsupported Media Type"}`,
 	}
 	HTTP500 = HttpResponse{
 		Version: "HTTP/1.1",
@@ -228,8 +230,8 @@ var (
 		Reason: "Internal Server Error",
 		Headers: map[string]string{
 			"Content-Type": "application/json",
-			"Content-Length": "23",
+			"Content-Length": strconv.Itoa(len(`{"Message": "Internal Server Error"}`)),
 		},
-		Body: `{"Internal Server Error"}`,
+		Body: `{"Message": "Internal Server Error"}`,
 	}
 )

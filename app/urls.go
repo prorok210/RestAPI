@@ -2,7 +2,7 @@ package app
 
 import (
 	"RestAPI/server"
-	"RestAPI/userApp"
+	"RestAPI/user"
 )
 
 type viewFunc func(server.HttpRequest) (server.HttpResponse)
@@ -19,8 +19,14 @@ func router(url string) (viewFunc) {
 	return viewsList[url]
 }
 
+/*
+	Функция InitViews() - инициализация списка представлений.
+	После создания представлений их необходимо зарегистрировать в этой функции, чтобы они были доступны для обработки запросов
+	Роутер выдаст указатель на функцию, которая будет обрабатывать запрос или nil, если такой функции нет
+*/
+
 func InitViews() {
-	registerView("/hello", userApp.HelloView)
-	registerView("/goodbye", userApp.GoodbyeView)
-	registerView("/add", userApp.AddView)
+	registerView("/hello", user.HelloView)
+	registerView("/goodbye", user.GoodbyeView)
+	registerView("/add", user.AddView)
 }

@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -103,7 +102,7 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 
 		er = reqMiddleware(request, clientConn)
 		if er != nil {
-			log.Println("Error in middleware", er)
+			log.Println("Error in request middleware", er)
 			return
 		}
 
@@ -113,7 +112,6 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 			clientConn.Write(HTTP500.ToBytes())
 			continue
 		}
-		fmt.Println("Response: ", string(response))
 
 		go func() {
 			_, er = clientConn.Write(response)
@@ -178,22 +176,24 @@ func reqMiddleware(request *HttpRequest, clientConn net.Conn ) (error) {
 		return errors.New("Unsupported media type")
 	}
 
-	contentLengthFlag := false
-	contentLengthStr := request.Headers["Content-Length"]
-	if contentLengthStr != "0" && len(request.Body) > 0 {
+	contentLengthStr, hasContentLength := request.Headers["Content-Length"]
+
+	if hasContentLength {
 		contentLength, err := strconv.Atoi(contentLengthStr)
 		if err != nil {
 			log.Println("Invalid Content-Length:", contentLengthStr)
-		} else {
-			if contentLength == len(request.Body) {
-				contentLengthFlag = true
-			}
+			clientConn.Write(HTTP411.ToBytes()) // Ответ 411: Length Required
+			return errors.New("invalid Content-Length header")
 		}
-	}
-	if contentLengthStr == "0" && len(request.Body) == 0 {
-		contentLengthFlag = true
-	}
-	if !contentLengthFlag {
+	
+		// Проверка корректности Content-Length и длины тела запроса
+		if contentLength != len(request.Body) {
+			clientConn.Write(HTTP411.ToBytes())
+			return errors.New("Content-Length does not match body length")
+		}
+	
+	} else if len(request.Body) > 0 {
+		// Если Content-Length отсутствует, но тело запроса не пустое
 		clientConn.Write(HTTP411.ToBytes())
 		return errors.New("Content-Length required")
 	}

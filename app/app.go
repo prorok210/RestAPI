@@ -16,7 +16,6 @@ func MainApplication(request *server.HttpRequest) ([]byte, error) {
 	}
 
 	response := view(*request)
-	
 
 	return response.ToBytes(), nil
 }
