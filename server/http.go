@@ -100,6 +100,12 @@ func (resp *HttpResponse) ToBytes() []byte {
 	return []byte(resp.ToString())
 }
 
+
+func (rqst *HttpRequest) ToBytes() []byte {
+	return []byte(rqst.ToString())
+}
+
+
 func (resp *HttpResponse) SetHeader(key, value string) {
 	resp.Headers[key] = value
 }

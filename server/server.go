@@ -182,18 +182,16 @@ func reqMiddleware(request *HttpRequest, clientConn net.Conn ) (error) {
 		contentLength, err := strconv.Atoi(contentLengthStr)
 		if err != nil {
 			log.Println("Invalid Content-Length:", contentLengthStr)
-			clientConn.Write(HTTP411.ToBytes()) // Ответ 411: Length Required
+			clientConn.Write(HTTP411.ToBytes())
 			return errors.New("invalid Content-Length header")
 		}
 	
-		// Проверка корректности Content-Length и длины тела запроса
 		if contentLength != len(request.Body) {
 			clientConn.Write(HTTP411.ToBytes())
 			return errors.New("Content-Length does not match body length")
 		}
 	
 	} else if len(request.Body) > 0 {
-		// Если Content-Length отсутствует, но тело запроса не пустое
 		clientConn.Write(HTTP411.ToBytes())
 		return errors.New("Content-Length required")
 	}

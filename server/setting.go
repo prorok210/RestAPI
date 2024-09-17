@@ -1,17 +1,21 @@
 package server
 
 /*
-	Настройки сервера
+	Настройки сервера (и приложения)
 */
 
 import (
+	"log"
+	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 var ALLOWED_HOSTS = []string{
 	"localhost",
 	"127.0.0.1",
-	"::1",
+	// "::1",
 }
 
 var ALLOWED_METHODS = []string{
@@ -32,9 +36,31 @@ var SUPPORTED_MEDIA_TYPES = []string{
 }
 
 const (
-	HOST string = "localhost"
-	PORT int = 8081
-	CONN_TIMEOUT time.Duration = 20
-	BUFSIZE int = 2048
+	HOST string 				= "localhost"
+	PORT int 					= 8081
+	CONN_TIMEOUT time.Duration	= 20
+	BUFSIZE int 				= 2048	
+)
+/*
+	MTS API KEY
+*/
+var (
+	MTS_API_KEY string
+	MTS_API_NUMBER string
 )
 
+
+func InitEnv() error {
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatalf("Error env load %v", err)
+		return err
+    }
+	MTS_API_KEY = os.Getenv("MTS_API_KEY")
+	MTS_API_NUMBER = os.Getenv("MTS_API_NUMBER")
+	if (MTS_API_KEY == "" || MTS_API_NUMBER == "") {
+		log.Fatalf("Error env load %v", err)
+		return err
+	}
+	return nil
+}

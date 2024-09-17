@@ -16,6 +16,12 @@ func main() {
 	
 	app.InitViews()
 
+	er = server.InitEnv()
+	if er != nil {
+		log.Println("Error initializing environment", er)
+		return
+	}
+
 	er = serv.Start()
 	if er != nil {
 		log.Println("Error starting server", er)
