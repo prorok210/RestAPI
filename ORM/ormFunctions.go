@@ -15,6 +15,7 @@ func newUser(name string, email string) *User {
 	fmt.Println("Создан новый пользователь:", name, email)
 	return &User{
 		TableName: "users",
+		ID:        0, // Система задаст id сама после SQL-запроса get к БД
 		Name:      name,
 		Email:     email,
 	}
@@ -34,11 +35,6 @@ func extractFields(obj interface{}) ([]interface{}, []string) {
 		field := typ.Field(i)
 		fieldName := field.Name
 
-		// Пропускаем поле с именем "ID"
-		if fieldName == "ID" {
-			continue
-		}
-
 		// Добавляем имя поля в список колонок
 		columns = append(columns, fieldName)
 
@@ -53,7 +49,7 @@ func extractFields(obj interface{}) ([]interface{}, []string) {
 func InitDB() {
 
 	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
-	fmt.Println(conn)
+	// fmt.Println(conn)
 	if InitDBError != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", InitDBError)
 	}
@@ -152,4 +148,65 @@ func Create(obj interface{}) {
 		log.Fatalf("Ошибка вставки строки: %v", err)
 	}
 	fmt.Println("Строка успешно добавлена. Запрос:", insertSQL)
+}
+
+func (table *BaseTable) getById(id uint) (*User, error) {
+	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
+	rows, err := conn.Query(context.Background(), selectSQL, id)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка выполнения SELECT: %v", err)
+	}
+	defer rows.Close()
+
+	// Проверяем, есть ли строки в результате запроса
+	if !rows.Next() {
+		return nil, fmt.Errorf("пользователь с id %d не найден", id)
+	}
+
+	// Создаем экземпляр User для заполнения
+	user := &User{
+		TableName: table.TableName,
+	}
+
+	// Сканируем данные из строки в поля структуры User
+	err = rows.Scan(&user.ID, &user.Name, &user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка сканирования строки: %v", err)
+	}
+
+	// Проверка на ошибки после завершения итерации
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("ошибка обработки строк: %v", rows.Err())
+	}
+
+	// Возвращаем пользователя и nil как ошибку, если всё прошло успешно
+	return user, nil
+}
+
+func Update(obj interface{}) {
+	values, columns := extractFields(obj) // Получаем все поля структуры и их значения
+	fmt.Println(values, columns)
+	columns = columns[1:]                      // Имя таблицы мы используем в коде, но не передаем его в БД
+	tableName, values := values[0], values[1:] // Получаем имя таблицы
+
+	strID := fmt.Sprint(values[0])            // Получаем ID записи
+	values, columns = values[1:], columns[1:] // Удаляем ID из списка значений и списка полей т,к это тоже не передаем в БД
+
+	updateData := ""
+	for i := range columns {
+		updateData += fmt.Sprintf(`%s = '%s', `, strings.ToLower(columns[i]), values[i])
+	}
+
+	// Убираем последнюю запятую и пробел
+	updateData = strings.TrimSuffix(updateData, ", ")
+
+	fmt.Println(fmt.Sprintf(`UPDATE %s SET %s WHERE id = %s;`, tableName, updateData, strID))
+
+	insertSQL := fmt.Sprintf(`UPDATE %s SET %s WHERE id = %s;`, tableName, updateData, strID)
+	// Вставляем строки
+	_, err := conn.Exec(context.Background(), insertSQL)
+	if err != nil {
+		log.Fatalf("Ошибка обновления строки: %v", err)
+	}
+	fmt.Println("Строка успешно обновлена. Запрос:", insertSQL)
 }

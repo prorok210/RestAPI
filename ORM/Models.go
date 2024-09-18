@@ -3,9 +3,9 @@ package main
 // Объект из таблицы пользователей
 type User struct {
 	TableName string
-	// ID        uint сделать функцию для получения последнего ID
-	Name  string
-	Email string
+	ID        uint
+	Name      string
+	Email     string
 }
 
 // Базовая модель таблицы
