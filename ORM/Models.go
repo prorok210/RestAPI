@@ -1,6 +1,16 @@
 package main
 
-// Объект из таблицы пользователей
+// Base Table structure
+type BaseTable struct {
+	TableName string
+}
+
+// Table of users
+type TableUsers struct {
+	BaseTable
+}
+
+// User structure
 type User struct {
 	TableName string
 	ID        uint
@@ -8,22 +18,12 @@ type User struct {
 	Email     string
 }
 
-// Базовая модель таблицы
-type BaseTable struct {
-	TableName string
-}
-
-// Таблица пользователей
-type TableUsers struct {
-	BaseTable
-}
-
-// Таблица диалогов
+// Table of dialogs
 type TableDialogs struct {
 	BaseTable
 }
 
-// Объект из таблицы диалогов
+// Dialog structure
 type Dialog struct {
 	name string
 }
