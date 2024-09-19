@@ -55,8 +55,15 @@ func (table *BaseTable) GetAll() error {
 func (bt *BaseTable) newModel() BaseCell {
 	if modelType, ok := tableRegistry[bt.TableName]; ok {
 		// Создание нового экземпляра нужного типа
-		modelValue := reflect.New(modelType).Elem().Addr().Interface().(BaseCell)
-		return modelValue
+		modelValue := reflect.New(modelType).Elem()
+
+		// Устанавливаем значение поля TableName напрямую через рефлексию
+		tableNameField := modelValue.FieldByName("TableName")
+		if tableNameField.IsValid() && tableNameField.CanSet() {
+			tableNameField.SetString(bt.TableName)
+		}
+
+		return modelValue.Addr().Interface().(BaseCell)
 	}
 	return nil
 }
