@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"unicode"
 )
 
 // Function to get all values ​​from the database
@@ -52,7 +51,7 @@ func (table *BaseTable) GetAll() error {
 }
 
 // Фабричная функция для создания объектов на основании TableName
-func (bt *BaseTable) newModel() BaseCell {
+func (bt *BaseTable) newModel(fields map[string]interface{}) BaseCell {
 	if modelType, ok := tableRegistry[bt.TableName]; ok {
 		// Создание нового экземпляра нужного типа
 		modelValue := reflect.New(modelType).Elem()
@@ -63,41 +62,24 @@ func (bt *BaseTable) newModel() BaseCell {
 			tableNameField.SetString(bt.TableName)
 		}
 
-		return modelValue.Addr().Interface().(BaseCell)
+		model := modelValue.Addr().Interface().(BaseCell)
+
+		if model == nil {
+			fmt.Println("Неизвестная таблица:", bt.TableName)
+			return nil
+		}
+
+		// Заполнение модели данными из fields
+		for fieldName, value := range fields {
+			if fieldName == "Id" {
+				value = uint(value.(int32))
+			}
+			reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
+		}
+
+		return model
 	}
 	return nil
-}
-
-func capitalizeFirstLetter(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	runes := []rune(s)
-	runes[0] = unicode.ToUpper(runes[0])
-	return string(runes)
-}
-
-// Пример функции get
-func (bt *BaseTable) Get(fields map[string]interface{}) BaseCell {
-	// Создание нового объекта на основе TableName
-	model := bt.newModel()
-
-	fmt.Println(model)
-
-	if model == nil {
-		fmt.Println("Неизвестная таблица:", bt.TableName)
-		return nil
-	}
-
-	// Заполнение модели данными из fields
-	for fieldName, value := range fields {
-		if fieldName == "Id" {
-			value = uint(value.(int32))
-		}
-		reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
-	}
-
-	return model
 }
 
 func (table *BaseTable) getById(id uint) (BaseCell, error) {
@@ -134,12 +116,8 @@ func (table *BaseTable) getById(id uint) (BaseCell, error) {
 		result[columnName] = values[i]
 	}
 	fmt.Println(result)
-	obj := table.Get(result)
+	obj := table.newModel(result)
 	fmt.Println(obj)
-	if err != nil {
-		log.Printf("Line scan error: %v\n", err)
-		return nil, fmt.Errorf("Line scan error: %v\n", err)
-	}
 
 	// Проверка на ошибки после завершения итерации
 	if rows.Err() != nil {

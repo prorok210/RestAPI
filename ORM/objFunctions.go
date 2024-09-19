@@ -6,6 +6,7 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"unicode"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -49,7 +50,9 @@ func InitDB() error {
 
 	fmt.Println("Successfully connected to the database.")
 
-	createTableSQL := `
+	creatingTables := []string{}
+
+	createTableSQL1 := `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(50),
@@ -63,21 +66,16 @@ func InitDB() error {
 		opponent VARCHAR(50)
 	);`
 
+	creatingTables = append(creatingTables, createTableSQL1, createTableSQL2)
 	// Execute a table creation request
-	_, err := conn.Exec(context.Background(), createTableSQL)
-	if err != nil {
-		log.Printf("Error creating table: %v", err)
-		return fmt.Errorf("Error creating table: %v", err)
-	} else {
-		fmt.Println("Table created successfully or already exists.")
-	}
-
-	_, err = conn.Exec(context.Background(), createTableSQL2)
-	if err != nil {
-		log.Printf("Error creating table: %v", err)
-		return fmt.Errorf("Error creating table: %v", err)
-	} else {
-		fmt.Println("Table created successfully or already exists.")
+	for _, createTableSQL := range creatingTables {
+		_, err := conn.Exec(context.Background(), createTableSQL)
+		if err != nil {
+			log.Printf("Error creating table: %v", err)
+			return fmt.Errorf("Error creating table: %v", err)
+		} else {
+			fmt.Println("Table created successfully or already exists.")
+		}
 	}
 
 	return nil
@@ -154,4 +152,13 @@ func ProcessUser(i interface{}) {
 		// Приведение не удалось
 		fmt.Println("Приведение к User не удалось")
 	}
+}
+
+func capitalizeFirstLetter(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }
