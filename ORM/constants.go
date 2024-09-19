@@ -18,4 +18,8 @@ var (
 		"users":   reflect.TypeOf(User{TableName: "users"}),
 		"dialogs": reflect.TypeOf(Dialog{TableName: "dialogs"}),
 	}
+	typeMap = map[string]reflect.Type{
+		"users":   reflect.TypeOf((*User)(nil)).Elem(),
+		"dialogs": reflect.TypeOf((*Dialog)(nil)).Elem(),
+	}
 )

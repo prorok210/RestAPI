@@ -22,3 +22,7 @@
 2024/09/19 15:51:47 Row insertion error: ОШИБКА: повторяющееся значение ключа нарушает ограничение уникальности "users_pkey" (SQLSTATE 23505)
 2024/09/19 15:52:57 Row insertion error: ОШИБКА: повторяющееся значение ключа нарушает ограничение уникальности "dialogs_pkey" (SQLSTATE 23505)
 2024/09/19 15:52:57 Row insertion error: ОШИБКА: повторяющееся значение ключа нарушает ограничение уникальности "users_pkey" (SQLSTATE 23505)
+2024/09/19 17:00:22 Dialog by id: &{dialogs 1 Mee MyFriends}
+2024/09/19 17:04:22 Dialog by id: &{dialogs 1 Mee MyFriends}
+2024/09/19 17:05:25 Dialog by id: &{dialogs 1 Mee MyFriends}
+2024/09/19 17:07:23 Dialog by id: &{dialogs 1 Mee MyFriends}

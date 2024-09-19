@@ -15,6 +15,10 @@ func (user *User) ToFields() ([]interface{}, []string) {
 	return extractFields(user)
 }
 
+func (dialog *Dialog) ToFields() ([]interface{}, []string) {
+	return extractFields(dialog)
+}
+
 // Generic function to extract fields
 func extractFields(obj interface{}) ([]interface{}, []string) {
 	fmt.Println("Extracting fields from an object:", obj)
@@ -141,19 +145,6 @@ func Update(obj interface{}) error {
 	return nil
 }
 
-// Функция, которая принимает интерфейс
-func ProcessUser(i interface{}) {
-	// Приведение интерфейса к структуре User
-	user, ok := i.(User)
-	if ok {
-		// Приведение успешно
-		fmt.Printf("User: %s, Email: %s\n", user.Name, user.Email)
-	} else {
-		// Приведение не удалось
-		fmt.Println("Приведение к User не удалось")
-	}
-}
-
 func capitalizeFirstLetter(s string) string {
 	if len(s) == 0 {
 		return s
@@ -161,4 +152,27 @@ func capitalizeFirstLetter(s string) string {
 	runes := []rune(s)
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
+}
+
+// convertObject function
+func convertObject(obj interface{}, tableName string) (interface{}, error) {
+	newType, ok := typeMap[tableName]
+	if !ok {
+		return nil, fmt.Errorf("type %s not found in typeMap", tableName)
+	}
+
+	objValue := reflect.ValueOf(obj)
+	objType := objValue.Type()
+
+	if objType != newType {
+		if !newType.AssignableTo(objType) {
+			return nil, fmt.Errorf("type %s is not assignable to %s", newType, objType)
+		}
+
+		newObj := reflect.New(newType).Elem()
+		newObj.Set(objValue.Convert(newType))
+		return newObj.Interface(), nil
+	}
+
+	return obj, nil
 }

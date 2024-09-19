@@ -51,21 +51,21 @@ func (table *BaseTable) GetAll() error {
 }
 
 // Фабричная функция для создания объектов на основании TableName
-func (bt *BaseTable) newModel(fields map[string]interface{}) BaseCell {
-	if modelType, ok := tableRegistry[bt.TableName]; ok {
+func (table *BaseTable) newModel(fields map[string]interface{}) BaseCell {
+	if modelType, ok := tableRegistry[table.TableName]; ok {
 		// Создание нового экземпляра нужного типа
 		modelValue := reflect.New(modelType).Elem()
 
 		// Устанавливаем значение поля TableName напрямую через рефлексию
 		tableNameField := modelValue.FieldByName("TableName")
 		if tableNameField.IsValid() && tableNameField.CanSet() {
-			tableNameField.SetString(bt.TableName)
+			tableNameField.SetString(table.TableName)
 		}
 
 		model := modelValue.Addr().Interface().(BaseCell)
 
 		if model == nil {
-			fmt.Println("Неизвестная таблица:", bt.TableName)
+			fmt.Println("Неизвестная таблица:", table.TableName)
 			return nil
 		}
 
@@ -82,7 +82,7 @@ func (bt *BaseTable) newModel(fields map[string]interface{}) BaseCell {
 	return nil
 }
 
-func (table *BaseTable) getById(id uint) (BaseCell, error) {
+func (table *BaseTable) getById(id uint) (interface{}, error) {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
 	rows, err := conn.Query(context.Background(), selectSQL, id)
 	if err != nil {
@@ -127,5 +127,6 @@ func (table *BaseTable) getById(id uint) (BaseCell, error) {
 
 	// Возвращаем пользователя и nil как ошибку, если всё прошло успешно
 	// Дополнить, чтобы вместо obj возвращало obj.(*type) для возврата не интерфейса, а структуры на основе TableName
+	convertObject(obj, table.TableName)
 	return obj, nil
 }
