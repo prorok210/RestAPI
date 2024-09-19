@@ -148,5 +148,6 @@ func (table *BaseTable) getById(id uint) (BaseCell, error) {
 	}
 
 	// Возвращаем пользователя и nil как ошибку, если всё прошло успешно
+	// Дополнить, чтобы вместо obj возвращало obj.(*type) для возврата не интерфейса, а структуры на основе TableName
 	return obj, nil
 }

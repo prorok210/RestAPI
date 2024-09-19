@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
-	"reflect"
 )
 
 func main() {
@@ -23,23 +21,14 @@ func main() {
 	log.SetOutput(logFile)
 
 	// Making a Go object from a sql table
-	users := &TableUsers{BaseTable{TableName: "users"}}
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	cell, err := users.getById(36)
-	user := cell.(*User)
-	fmt.Println(user)
-	user.Name = "Василий Пупкин"
-	fmt.Println(reflect.TypeOf(user))
-
-	fmt.Println(user)
-	Update(user)
-	cell, err = users.getById(36)
-	user = cell.(*User)
-	fmt.Println(user)
+	dialogs := &TableDialogs{BaseTable{TableName: "dialogs"}}
+	dialog := newDialog("Mee", "MyFriends")
+	Create(dialog)
+	dialogs.GetAll()
+	// users := &TableUsers{BaseTable{TableName: "users"}}
+	user := newUser("Vasya", "Piupiu")
+	Create(user)
+	dialogs.GetAll()
 	// users.GetAll()
 
 }

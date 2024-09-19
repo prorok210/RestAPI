@@ -29,5 +29,8 @@ type TableDialogs struct {
 
 // Dialog structure
 type Dialog struct {
-	name string
+	TableName string
+	Id        uint
+	Owner     string
+	Opponent  string
 }

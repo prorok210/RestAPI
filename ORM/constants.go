@@ -16,6 +16,6 @@ var (
 	// Маппинг типов для создания дочерних объектов
 	tableRegistry = map[string]reflect.Type{
 		"users":   reflect.TypeOf(User{TableName: "users"}),
-		"dialogs": reflect.TypeOf(Dialog{}),
+		"dialogs": reflect.TypeOf(Dialog{TableName: "dialogs"}),
 	}
 )

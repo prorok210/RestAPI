@@ -56,8 +56,23 @@ func InitDB() error {
 		email VARCHAR(50)
 	);`
 
+	createTableSQL2 := `
+	CREATE TABLE IF NOT EXISTS dialogs (
+		id SERIAL PRIMARY KEY,
+		owner VARCHAR(50),
+		opponent VARCHAR(50)
+	);`
+
 	// Execute a table creation request
 	_, err := conn.Exec(context.Background(), createTableSQL)
+	if err != nil {
+		log.Printf("Error creating table: %v", err)
+		return fmt.Errorf("Error creating table: %v", err)
+	} else {
+		fmt.Println("Table created successfully or already exists.")
+	}
+
+	_, err = conn.Exec(context.Background(), createTableSQL2)
 	if err != nil {
 		log.Printf("Error creating table: %v", err)
 		return fmt.Errorf("Error creating table: %v", err)
@@ -72,8 +87,8 @@ func InitDB() error {
 func Create(obj interface{}) error {
 	fmt.Println("CREATE", obj)
 	values, columns := extractFields(obj)      // Getting the fields and their values
-	columns = columns[1:]                      // Removing a column "TableName"
-	tableName, values := values[0], values[1:] // Getting the table name and delete it from the list of values
+	columns = columns[2:]                      // Removing a column "TableName" and Id
+	tableName, values := values[0], values[2:] // Getting the table name and delete it from the list of value
 
 	columnsStr := "(" + strings.Join(columns, ", ") + ")" // Create a SQL-string with column names
 
@@ -87,6 +102,7 @@ func Create(obj interface{}) error {
 	// Create a SQL-string
 	insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, tableName, columnsStr, placeholdersStr)
 	// Send the request
+	fmt.Println(insertSQL)
 	_, err := conn.Exec(context.Background(), insertSQL, values...)
 	if err != nil {
 		log.Printf("Row insertion error: %v", err)
