@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 )
 
 // Function to get all values ​​from the database
@@ -47,6 +48,34 @@ func (table *BaseTable) GetAll() error {
 	}
 	// Сделать return нужных структур, не забыть про поле tableName
 	return nil
+}
+
+// Фабричная функция для создания объектов на основании TableName
+func (bt *BaseTable) newModel() BaseCell {
+	if modelType, ok := tableRegistry[bt.TableName]; ok {
+		// Создание нового экземпляра нужного типа
+		modelValue := reflect.New(modelType).Elem().Addr().Interface().(BaseCell)
+		return modelValue
+	}
+	return nil
+}
+
+// Пример функции get
+func (bt *BaseTable) Get(fields map[string]interface{}) BaseCell {
+	// Создание нового объекта на основе TableName
+	model := bt.newModel()
+
+	if model == nil {
+		fmt.Println("Неизвестная таблица:", bt.TableName)
+		return nil
+	}
+
+	// Заполнение модели данными из fields
+	for fieldName, value := range fields {
+		reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
+	}
+
+	return model
 }
 
 func (table *BaseTable) getById(id uint) (*User, error) {

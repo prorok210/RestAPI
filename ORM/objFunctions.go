@@ -10,6 +10,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+func (user *User) ToFields() ([]interface{}, []string) {
+	return extractFields(user)
+}
+
 // Generic function to extract fields
 func extractFields(obj interface{}) ([]interface{}, []string) {
 	fmt.Println("Extracting fields from an object:", obj)
@@ -60,6 +64,7 @@ func InitDB() error {
 	} else {
 		fmt.Println("Table created successfully or already exists.")
 	}
+
 	return nil
 }
 

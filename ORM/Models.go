@@ -1,5 +1,9 @@
 package main
 
+type BaseCell interface {
+	ToFields() ([]interface{}, []string)
+}
+
 // Base Table structure
 type BaseTable struct {
 	TableName string
