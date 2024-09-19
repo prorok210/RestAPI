@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 )
 
 func main() {
@@ -27,17 +28,18 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	// user := newUser("Василий2 Пупкинн", "vvas2yapypkin@gmail.com")
-	// Create(user)
-	// users.GetAll()
-	user, err := users.getById(255)
-	fmt.Println(user)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// user.Name = "Виталий Крючков2"
-	// Update(user)
 
+	cell, err := users.getById(36)
+	user := cell.(*User)
+	fmt.Println(user)
+	user.Name = "Василий Пупкин"
+	fmt.Println(reflect.TypeOf(user))
+
+	fmt.Println(user)
+	Update(user)
+	cell, err = users.getById(36)
+	user = cell.(*User)
+	fmt.Println(user)
 	// users.GetAll()
-	// users.GetAll()
+
 }

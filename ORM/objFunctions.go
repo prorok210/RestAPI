@@ -116,6 +116,8 @@ func Update(obj interface{}) error {
 	updateData = strings.TrimSuffix(updateData, ", ")
 
 	insertSQL := fmt.Sprintf(`UPDATE %s SET %s WHERE id = %s;`, tableName, updateData, strID)
+
+	fmt.Println(insertSQL)
 	// Passing strings
 	_, err := conn.Exec(context.Background(), insertSQL)
 	if err != nil {
@@ -123,4 +125,17 @@ func Update(obj interface{}) error {
 	}
 	fmt.Println("Row updated successfully")
 	return nil
+}
+
+// Функция, которая принимает интерфейс
+func ProcessUser(i interface{}) {
+	// Приведение интерфейса к структуре User
+	user, ok := i.(User)
+	if ok {
+		// Приведение успешно
+		fmt.Printf("User: %s, Email: %s\n", user.Name, user.Email)
+	} else {
+		// Приведение не удалось
+		fmt.Println("Приведение к User не удалось")
+	}
 }

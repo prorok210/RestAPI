@@ -17,7 +17,7 @@ type TableUsers struct {
 // User structure
 type User struct {
 	TableName string
-	ID        uint
+	Id        uint
 	Name      string
 	Email     string
 }

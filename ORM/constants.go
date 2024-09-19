@@ -15,7 +15,7 @@ var (
 	logFile *os.File
 	// Маппинг типов для создания дочерних объектов
 	tableRegistry = map[string]reflect.Type{
-		"users":   reflect.TypeOf(User{}),
+		"users":   reflect.TypeOf(User{TableName: "users"}),
 		"dialogs": reflect.TypeOf(Dialog{}),
 	}
 )

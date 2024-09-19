@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"unicode"
 )
 
 // Function to get all values ​​from the database
@@ -60,10 +61,21 @@ func (bt *BaseTable) newModel() BaseCell {
 	return nil
 }
 
+func capitalizeFirstLetter(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
 // Пример функции get
 func (bt *BaseTable) Get(fields map[string]interface{}) BaseCell {
 	// Создание нового объекта на основе TableName
 	model := bt.newModel()
+
+	fmt.Println(model)
 
 	if model == nil {
 		fmt.Println("Неизвестная таблица:", bt.TableName)
@@ -72,13 +84,16 @@ func (bt *BaseTable) Get(fields map[string]interface{}) BaseCell {
 
 	// Заполнение модели данными из fields
 	for fieldName, value := range fields {
+		if fieldName == "Id" {
+			value = uint(value.(int32))
+		}
 		reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
 	}
 
 	return model
 }
 
-func (table *BaseTable) getById(id uint) (*User, error) {
+func (table *BaseTable) getById(id uint) (BaseCell, error) {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
 	rows, err := conn.Query(context.Background(), selectSQL, id)
 	if err != nil {
@@ -93,13 +108,27 @@ func (table *BaseTable) getById(id uint) (*User, error) {
 		return nil, fmt.Errorf("Row with id = %d not found\n", id)
 	}
 
-	// Создаем экземпляр User для заполнения
-	user := &User{
-		TableName: table.TableName,
+	// Получаем метаданные столбцов (названия столбцов)
+	fieldDescriptions := rows.FieldDescriptions()
+
+	// Получаем значения столбцов
+	values, err := rows.Values()
+	if err != nil {
+		log.Printf("Error getting row values: %v\n", err)
+		return nil, fmt.Errorf("Error getting row values: %v\n", err)
 	}
 
-	// Сканируем данные из строки в поля структуры User
-	err = rows.Scan(&user.ID, &user.Name, &user.Email)
+	// Создаем map для хранения данных
+	result := make(map[string]interface{})
+
+	// Итерируем по столбцам и значениям, записывая их в map
+	for i, fd := range fieldDescriptions {
+		columnName := capitalizeFirstLetter(string(fd.Name))
+		result[columnName] = values[i]
+	}
+	fmt.Println(result)
+	obj := table.Get(result)
+	fmt.Println(obj)
 	if err != nil {
 		log.Printf("Line scan error: %v\n", err)
 		return nil, fmt.Errorf("Line scan error: %v\n", err)
@@ -112,5 +141,5 @@ func (table *BaseTable) getById(id uint) (*User, error) {
 	}
 
 	// Возвращаем пользователя и nil как ошибку, если всё прошло успешно
-	return user, nil
+	return obj, nil
 }
