@@ -12,6 +12,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const (
+	HOST string 				= "localhost"
+	PORT int 					= 8081
+	CONN_TIMEOUT time.Duration	= 20
+	BUFSIZE int 				= 2048	
+)
+
 var ALLOWED_HOSTS = []string{
 	"localhost",
 	"127.0.0.1",
@@ -35,12 +42,16 @@ var SUPPORTED_MEDIA_TYPES = []string{
 	"image/png",
 }
 
-const (
-	HOST string 				= "localhost"
-	PORT int 					= 8081
-	CONN_TIMEOUT time.Duration	= 20
-	BUFSIZE int 				= 2048	
+/*
+	Настройки JWT
+*/
+var (
+	JWT_ACCESS_SECRET_KEY string
+	JWT_REFRESH_SECRET_KEY string
+	JWT_ACCESS_EXPIRATION_TIME time.Duration = 24 * time.Hour
+	JWT_REFRESH_EXPIRATION_TIME time.Duration = 336 * time.Hour
 )
+
 /*
 	MTS API KEY
 */
@@ -62,5 +73,13 @@ func InitEnv() error {
 		log.Fatalf("Error env load %v", err)
 		return err
 	}
+	JWT_ACCESS_SECRET_KEY = os.Getenv("JWT_ACCESS_SECRET_KEY")
+	JWT_REFRESH_SECRET_KEY = os.Getenv("JWT_REFRESH_SECRET_KEY")
+	if (JWT_ACCESS_SECRET_KEY == "" || JWT_REFRESH_SECRET_KEY == "") {
+		log.Fatalf("Error env load %v", err)
+		return err
+	}
+	
+
 	return nil
 }

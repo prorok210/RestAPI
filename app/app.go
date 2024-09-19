@@ -6,6 +6,7 @@ package app
 
 import (
 	"RestAPI/server"
+	"strconv"
 )
 
 func MainApplication(request *server.HttpRequest) ([]byte, error) {
@@ -16,6 +17,9 @@ func MainApplication(request *server.HttpRequest) ([]byte, error) {
 	}
 
 	response := view(*request)
+	if response.Body != "" {
+		response.Headers["Content-Length"] = strconv.Itoa(len(response.Body))
+	}
 
 	return response.ToBytes(), nil
 }

@@ -8,8 +8,18 @@ type User struct {
 	Name 		string 	`json:"name"`
 	Surname 	string  `json:"surname"`
 	Age 		int     `json:"age"`
+	Email 		string  `json:"email"`
+	Password 	string  `json:"password"`
 	createAt 	string 
 	updateAt 	string
+}
+
+type Tokens struct {
+	UserID 				string
+	AccessTokenHash 	string
+	RefreshTokenHash 	string
+	CreateAt 			string
+	UpdateAt 			string
 }
 
 var userStore = make(map[string]*User) // Удалить позже

@@ -20,15 +20,12 @@ func router(url string) (viewFunc) {
 }
 
 /*
-	Функция InitViews() - инициализация списка представлений.
+	Функция InitViews() - инициализация списка представлений
 	После создания представлений их необходимо зарегистрировать в этой функции, чтобы они были доступны для обработки запросов
 	Роутер выдаст указатель на функцию, которая будет обрабатывать запрос или nil, если функции не нашлось
 */
 
 func InitViews() {
-	registerView("/hello", user.HelloView)
-	registerView("/goodbye", user.GoodbyeView)
-	registerView("/add", user.AddView)
 	registerView("/createUser", user.CreateUserView)
 	registerView("/verifyUser", user.VerifyUserView)
 }
