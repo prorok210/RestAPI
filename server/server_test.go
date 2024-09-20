@@ -344,7 +344,7 @@ func TestKeepAliveMiddleware(t *testing.T) {
 			}
 		}
 
-		if err := connMock.Close(); err != nil {
+		if err := testCase.clientConn.Close(); err != nil {
 			t.Errorf("Test case %d: Failed to close connection: %s", i, err)
 		}
 	}
