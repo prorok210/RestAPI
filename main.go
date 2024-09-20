@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("Error creating server", er)
 		return
 	}
-	
+
 	app.InitViews()
 
 	er = server.InitEnv()
@@ -27,6 +27,6 @@ func main() {
 		log.Println("Error starting server", er)
 		return
 	}
-	
+
 	select {}
 }

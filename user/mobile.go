@@ -11,13 +11,11 @@ import (
 	"time"
 )
 
-
 func genareteOTP() string {
 	rand.Seed(time.Now().UnixNano())
 	otp := rand.Intn(999999)
-	return fmt.Sprintf("%06d", otp) 
+	return fmt.Sprintf("%06d", otp)
 }
-
 
 func (u *User) SendSMS(message string) error {
 	if u.Mobile == "" {
@@ -38,7 +36,7 @@ func (u *User) SendSMS(message string) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer " + server.MTS_API_KEY)
+	req.Header.Set("Authorization", "Bearer "+server.MTS_API_KEY)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

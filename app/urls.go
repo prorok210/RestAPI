@@ -5,17 +5,15 @@ import (
 	"RestAPI/user"
 )
 
-type viewFunc func(server.HttpRequest) (server.HttpResponse)
-
+type viewFunc func(server.HttpRequest) server.HttpResponse
 
 var viewsList = make(map[string]viewFunc)
-
 
 func registerView(url string, f viewFunc) {
 	viewsList[url] = f
 }
 
-func router(url string) (viewFunc) {
+func router(url string) viewFunc {
 	return viewsList[url]
 }
 

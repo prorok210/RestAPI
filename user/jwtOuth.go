@@ -10,27 +10,25 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-
 func GenerateSecretKey(length int) (string, error) {
-    key := make([]byte, length)
-    
-    _, err := rand.Read(key)
-    if err != nil {
-        return "", err
-    }
-    
-    return base64.URLEncoding.EncodeToString(key), nil
-}
+	key := make([]byte, length)
 
+	_, err := rand.Read(key)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(key), nil
+}
 
 func GenerateAccessToken(mobile string, isActive bool) (string, error) {
 	if mobile == "" {
 		return "", errors.New("Mobile number is empty")
 	}
 	claims := jwt.MapClaims{
-		"mobile": mobile,
-		"isActive": isActive,
-		"exp": time.Now().Add(server.JWT_ACCESS_EXPIRATION_TIME).Unix(),
+		"mobile":     mobile,
+		"isActive":   isActive,
+		"exp":        time.Now().Add(server.JWT_ACCESS_EXPIRATION_TIME).Unix(),
 		"token_type": "access",
 	}
 
@@ -43,9 +41,9 @@ func GenerateRefreshToken(mobile string, isActive bool) (string, error) {
 		return "", errors.New("Mobile number is empty")
 	}
 	claims := jwt.MapClaims{
-		"mobile": mobile,
-		"isActive": isActive,
-		"exp": time.Now().Add(server.JWT_REFRESH_EXPIRATION_TIME).Unix(),
+		"mobile":     mobile,
+		"isActive":   isActive,
+		"exp":        time.Now().Add(server.JWT_REFRESH_EXPIRATION_TIME).Unix(),
 		"token_type": "refresh",
 	}
 

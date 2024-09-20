@@ -17,8 +17,7 @@ func isAllowedHostMiddleware(clientAddr string) bool {
 	return false
 }
 
-func reqMiddleware(request *HttpRequest, clientConn Conn) (error) {
-
+func reqMiddleware(request *HttpRequest, clientConn Conn) error {
 	methodFlag := false
 	for _, allowedMethod := range ALLOWED_METHODS {
 		if request.Method == allowedMethod {
@@ -56,12 +55,12 @@ func reqMiddleware(request *HttpRequest, clientConn Conn) (error) {
 			clientConn.Write(HTTP411.ToBytes())
 			return errors.New("invalid Content-Length header")
 		}
-	
+
 		if contentLength != len(request.Body) {
 			clientConn.Write(HTTP411.ToBytes())
 			return errors.New("Content-Length does not match body length")
 		}
-	
+
 	} else if len(request.Body) > 0 {
 		clientConn.Write(HTTP411.ToBytes())
 		return errors.New("Content-Length required")
@@ -70,7 +69,7 @@ func reqMiddleware(request *HttpRequest, clientConn Conn) (error) {
 	return nil
 }
 
-func keepAliveMiddleware(request *HttpRequest, clientConn Conn) (error) {
+func keepAliveMiddleware(request *HttpRequest, clientConn Conn) error {
 	if request.Headers == nil {
 		return errors.New("Connection: close")
 	}

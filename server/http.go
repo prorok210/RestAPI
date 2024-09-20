@@ -8,23 +8,22 @@ import (
 )
 
 /*
-	Структуры для работы с HTTP-запросами и ответами
+Структуры для работы с HTTP-запросами и ответами
 */
 type HttpRequest struct {
-	Method string
-	Url string
+	Method  string
+	Url     string
 	Version string
 	Headers map[string]string
-	Body string
+	Body    string
 }
-
 
 type HttpResponse struct {
 	Version string
-	Status int
-	Reason string
+	Status  int
+	Reason  string
 	Headers map[string]string
-	Body string
+	Body    string
 }
 
 /*
@@ -33,9 +32,10 @@ type HttpResponse struct {
 	ToString() - преобразование HTTP-запроса в строку
 	ToBytes() - преобразование HTTP-ответа в байтовый массив для отправки по сети
 	SetHeader() - установка заголовка в HTTP-ответе
+	Serialize() - сериализация данных в JSON и запись в тело HTTP-ответа
 */
 
-func (rqst *HttpRequest) ParseRequest(buffer []byte) (error) {
+func (rqst *HttpRequest) ParseRequest(buffer []byte) error {
 	if len(buffer) == 0 {
 		return errors.New("Empty request")
 	}
@@ -77,7 +77,6 @@ func (rqst *HttpRequest) ParseRequest(buffer []byte) (error) {
 	return nil
 }
 
-
 func (rqst *HttpRequest) ToString() string {
 	reqStr := rqst.Method + " " + rqst.Url + " " + rqst.Version + "\r\n"
 	for key, value := range rqst.Headers {
@@ -87,7 +86,6 @@ func (rqst *HttpRequest) ToString() string {
 
 	return reqStr
 }
-
 
 func (resp *HttpResponse) ToString() string {
 	respStr := resp.Version + " " + strconv.Itoa(resp.Status) + " " + resp.Reason + "\r\n"
@@ -99,16 +97,13 @@ func (resp *HttpResponse) ToString() string {
 	return respStr
 }
 
-
 func (resp *HttpResponse) ToBytes() []byte {
 	return []byte(resp.ToString())
 }
 
-
 func (rqst *HttpRequest) ToBytes() []byte {
 	return []byte(rqst.ToString())
 }
-
 
 func (resp *HttpResponse) SetHeader(key string, value string) {
 	if key == "" || value == "" {
@@ -119,7 +114,6 @@ func (resp *HttpResponse) SetHeader(key string, value string) {
 	}
 	resp.Headers[key] = value
 }
-
 
 func (resp *HttpResponse) Serialize(data interface{}) error {
 	if data == nil {
@@ -135,15 +129,15 @@ func (resp *HttpResponse) Serialize(data interface{}) error {
 }
 
 /*
-	Стандартные HTTP-ответы
+Стандартные HTTP-ответы
 */
 var (
 	HTTP200 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 200,
-		Reason: "OK",
+		Status:  200,
+		Reason:  "OK",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Status": "OK"}`)),
 		},
 		Body: `{"Status": "OK"}`,
@@ -151,115 +145,115 @@ var (
 
 	HTTP201 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 201,
-		Reason: "Created",
+		Status:  201,
+		Reason:  "Created",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Status": Created"}`)),
 		},
 		Body: `{"Status": Created"}`,
 	}
 	HTTP202 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 202,
-		Reason: "Accepted",
+		Status:  202,
+		Reason:  "Accepted",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Status": "Accepted"}`)),
 		},
 		Body: `{"Status": "Accepted"}`,
 	}
 	HTTP204 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 204,
-		Reason: "No Content",
+		Status:  204,
+		Reason:  "No Content",
 	}
 	HTTP400 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 400,
-		Reason: "Bad Request",
+		Status:  400,
+		Reason:  "Bad Request",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Bad Request"}`)),
 		},
 		Body: `{"Message": "Bad Request"}`,
 	}
 	HTTP401 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 401,
-		Reason: "Unauthorized",
+		Status:  401,
+		Reason:  "Unauthorized",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Unauthorized"}`)),
 		},
 		Body: `{"Message": "Unauthorized"}`,
 	}
 	HTTP403 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 403,
-		Reason: "Forbidden",
+		Status:  403,
+		Reason:  "Forbidden",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Forbidden"}`)),
 		},
 		Body: `{"Message": "Forbidden"}`,
 	}
 	HTTP404 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 404,
-		Reason: "Not Found",
+		Status:  404,
+		Reason:  "Not Found",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Not Found"}`)),
 		},
 		Body: `{"Message": "Not Found"}`,
 	}
 	HTTP405 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 405,
-		Reason: "Method Not Allowed",
+		Status:  405,
+		Reason:  "Method Not Allowed",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Method Not Allowed"}`)),
 		},
 		Body: `{"Message": "Method Not Allowed"}`,
 	}
 	HTTP408 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 408,
-		Reason: "Request Timeout",
+		Status:  408,
+		Reason:  "Request Timeout",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Request Timeout"}`)),
 		},
 		Body: `{"Message": "Request Timeout"}`,
 	}
 	HTTP411 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 411,
-		Reason: "Length Required",
+		Status:  411,
+		Reason:  "Length Required",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Length Required"}`)),
 		},
 		Body: `{"Message": "Length Required"}`,
 	}
 	HTTP415 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 415,
-		Reason: "Unsupported Media Type",
+		Status:  415,
+		Reason:  "Unsupported Media Type",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Unsupported Media Type"}`)),
 		},
 		Body: `{"Message": "Unsupported Media Type"}`,
 	}
 	HTTP500 = HttpResponse{
 		Version: "HTTP/1.1",
-		Status: 500,
-		Reason: "Internal Server Error",
+		Status:  500,
+		Reason:  "Internal Server Error",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":   "application/json",
 			"Content-Length": strconv.Itoa(len(`{"Message": "Internal Server Error"}`)),
 		},
 		Body: `{"Message": "Internal Server Error"}`,

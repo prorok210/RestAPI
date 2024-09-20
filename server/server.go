@@ -14,18 +14,18 @@ type RequestHandler func(request *HttpRequest) ([]byte, error)
 
 //go:generate moq --out=mocks/Conn_moq_test.go . Conn
 type Conn interface {
-    net.Conn
+	net.Conn
 }
 
 type Server struct {
-	servAddr 		string
-	listener 		net.Listener
-	handleApp 		RequestHandler
+	servAddr  string
+	listener  net.Listener
+	handleApp RequestHandler
 }
 
 func CreateServer(mainApplication RequestHandler) (*Server, error) {
 	regex := regexp.MustCompile(`^([a-zA-Z0-9.-]+):([0-9]{1,5})$`)
-	addr:= HOST + ":" + strconv.Itoa(PORT)
+	addr := HOST + ":" + strconv.Itoa(PORT)
 	if !regex.MatchString(addr) {
 		log.Println("Invalid address format")
 		return nil, errors.New("Invalid address format")
@@ -34,15 +34,15 @@ func CreateServer(mainApplication RequestHandler) (*Server, error) {
 		log.Println("Main application handler is not set")
 		return nil, errors.New("Main application handler is not set")
 	}
-	
+
 	server := &Server{
-		servAddr: addr,
-		handleApp: 	mainApplication,
+		servAddr:  addr,
+		handleApp: mainApplication,
 	}
 	return server, nil
 }
 
-func (s* Server) Start() error {
+func (s *Server) Start() error {
 	log.Println("Starting server ...")
 	if s == nil {
 		log.Println("Server is not created")
@@ -68,7 +68,7 @@ func (s* Server) Start() error {
 	return nil
 }
 
-func (s* Server) Stop() {
+func (s *Server) Stop() {
 	if s == nil {
 		log.Println("Server is not created")
 		return
@@ -83,7 +83,7 @@ func (s* Server) Stop() {
 	s.listener.Close()
 }
 
-func (s* Server) Listen(){
+func (s *Server) Listen() {
 	log.Println("Listening for incoming connections")
 	defer s.listener.Close()
 	defer log.Println("Server stopped")
@@ -95,7 +95,7 @@ func (s* Server) Listen(){
 			continue
 		}
 
-		if  isAllowedHostMiddleware(clientConn.RemoteAddr().String()) {
+		if isAllowedHostMiddleware(clientConn.RemoteAddr().String()) {
 			log.Println("Connection accepted from: ", clientConn.RemoteAddr().String())
 			go s.ConnProcessing(clientConn)
 		} else {
@@ -105,8 +105,7 @@ func (s* Server) Listen(){
 	}
 }
 
-
-func (s* Server) ConnProcessing(clientConn Conn) {
+func (s *Server) ConnProcessing(clientConn Conn) {
 	defer clientConn.Close()
 	defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
 
@@ -168,7 +167,7 @@ func (s* Server) ConnProcessing(clientConn Conn) {
 				log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
 			}
 		}()
-		
+
 		er = keepAliveMiddleware(request, clientConn)
 		if er != nil {
 			log.Println("Error in keep-alive middleware", er)

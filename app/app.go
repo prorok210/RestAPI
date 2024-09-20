@@ -15,7 +15,7 @@ func MainApplication(request *server.HttpRequest) ([]byte, error) {
 	}
 	view := router(request.Url)
 
-	if view == nil {	
+	if view == nil {
 		return server.HTTP404.ToBytes(), nil
 	}
 

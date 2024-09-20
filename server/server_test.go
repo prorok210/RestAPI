@@ -8,7 +8,7 @@ import (
 )
 
 /*
-	http.go testing
+http.go testing
 */
 func TestParseRequest(t *testing.T) {
 	testCases := []struct {
@@ -54,10 +54,10 @@ func TestParseRequest(t *testing.T) {
 	}
 }
 
-func TestSetHeader (t *testing.T) {
+func TestSetHeader(t *testing.T) {
 	testCases := []struct {
-		key          string
-		value        string
+		key   string
+		value string
 	}{
 		{
 			"Content-Type", "application/json",
@@ -81,21 +81,21 @@ func TestSetHeader (t *testing.T) {
 
 func TestSerialize(t *testing.T) {
 	testCases := []struct {
-		data          	interface{}
-		expectedResult 	string
-		expectedError	error
+		data           interface{}
+		expectedResult string
+		expectedError  error
 	}{
 		{
-			"test", `"test"`,nil,
+			"test", `"test"`, nil,
 		},
 		{
 			123, `123`, nil,
 		},
 		{
 			map[string]interface{}{
-				"key": "value",
+				"key":  "value",
 				"key2": "value2",
-			}, 
+			},
 			`{"key":"value","key2":"value2"}`,
 			nil,
 		},
@@ -123,8 +123,9 @@ func TestSerialize(t *testing.T) {
 		}
 	}
 }
+
 /*
-	server.go testing
+server.go testing
 */
 func TestCreateServer(t *testing.T) {
 	testCases := []struct {
@@ -139,7 +140,6 @@ func TestCreateServer(t *testing.T) {
 				return []byte(`{"Status": "OK"}`), nil
 			}, false,
 		},
-
 	}
 
 	for i, testCase := range testCases {
@@ -152,7 +152,7 @@ func TestCreateServer(t *testing.T) {
 
 func TestStartServer(t *testing.T) {
 	testCases := []struct {
-		handleApp 	 RequestHandler
+		handleApp     RequestHandler
 		expectedError bool
 	}{
 		{
@@ -176,7 +176,7 @@ func TestStartServer(t *testing.T) {
 }
 
 /*
-	middlewares.go testing
+middlewares.go testing
 */
 func TestIsAllowedHostMiddleware(t *testing.T) {
 	testCases := []struct {
@@ -210,14 +210,14 @@ func TestIsAllowedHostMiddleware(t *testing.T) {
 
 func TestReqMiddleware(t *testing.T) {
 	connMock := &ConnMock{
-        WriteFunc: func(b []byte) (n int, err error) {
-            return len(b), nil
-        },
-        CloseFunc: func() error {
-            return nil
-        },
-    }
-	
+		WriteFunc: func(b []byte) (n int, err error) {
+			return len(b), nil
+		},
+		CloseFunc: func() error {
+			return nil
+		},
+	}
+
 	testCases := []struct {
 		request       HttpRequest
 		clientConn    *ConnMock
@@ -238,7 +238,7 @@ func TestReqMiddleware(t *testing.T) {
 					"Content-Length": strconv.Itoa(len(`{"key": "value"}`)),
 				},
 				Body: `{"key": "value"}`,
-			},connMock, nil,
+			}, connMock, nil,
 		},
 		// Test case 2: Unsupported method
 		{
@@ -255,7 +255,7 @@ func TestReqMiddleware(t *testing.T) {
 					"Content-Length": strconv.Itoa(len(`{"key": "value"}`)),
 				},
 				Body: `{""}`,
-			},connMock, errors.New("Content-Length does not match body length"),
+			}, connMock, errors.New("Content-Length does not match body length"),
 		},
 		// Test case 4: Unsupported media type
 		{
@@ -271,7 +271,7 @@ func TestReqMiddleware(t *testing.T) {
 
 	for i, testCase := range testCases {
 		err := reqMiddleware(&testCase.request, testCase.clientConn)
-		
+
 		if testCase.expectedError == nil && err != nil {
 			t.Errorf("Test case %d: Expected no error, but got: %s", i, err)
 		} else if testCase.expectedError != nil {
@@ -294,7 +294,7 @@ func TestKeepAliveMiddleware(t *testing.T) {
 			return nil
 		},
 		CloseFunc: func() error {
-				return nil
+			return nil
 		},
 	}
 
@@ -333,7 +333,7 @@ func TestKeepAliveMiddleware(t *testing.T) {
 
 	for i, testCase := range testCases {
 		err := keepAliveMiddleware(&testCase.request, testCase.clientConn)
-		
+
 		if testCase.expectedError == nil && err != nil {
 			t.Errorf("Test case %d: Expected no error, but got: %s", i, err)
 		} else if testCase.expectedError != nil {

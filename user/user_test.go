@@ -11,38 +11,38 @@ import (
 )
 
 /*
-	Test mobile.go
+Test mobile.go
 */
 func TestSendSms(t *testing.T) {
 	testCases := []struct {
 		message string
-		Mobile string
-		err error
+		Mobile  string
+		err     error
 	}{
 		{
 			message: "Hello",
-			Mobile: "79936977511",
-			err: nil,
+			Mobile:  "79936977511",
+			err:     nil,
 		},
 		{
 			message: "",
-			Mobile: "79936977511",
-			err: errors.New("Message is empty"),
+			Mobile:  "79936977511",
+			err:     errors.New("Message is empty"),
 		},
 		{
 			message: "Hello",
-			Mobile: "",
-			err: errors.New("Mobile number is empty"),
+			Mobile:  "",
+			err:     errors.New("Mobile number is empty"),
 		},
 	}
-	
+
 	err := godotenv.Load("../.env")
 	if err != nil {
 		t.Errorf("Error env load %v", err)
 	}
 	server.MTS_API_KEY = os.Getenv("MTS_API_KEY")
 	server.MTS_API_NUMBER = os.Getenv("MTS_API_NUMBER")
-	if (server.MTS_API_KEY == "" || server.MTS_API_NUMBER == "") {
+	if server.MTS_API_KEY == "" || server.MTS_API_NUMBER == "" {
 		t.Errorf("Error env load %v", err)
 	}
 
@@ -52,19 +52,19 @@ func TestSendSms(t *testing.T) {
 		}
 		err := u.SendSMS(tc.message)
 		if err != nil {
-            if tc.err == nil {
-                t.Errorf("Unexpected error: %v", err)
-            } else if err.Error() != tc.err.Error() {
-                t.Errorf("Expected error: %v, got: %v", tc.err, err)
-            }
-        } else if tc.err != nil {
-            t.Errorf("Expected error: %v, but got none", tc.err)
-        }
+			if tc.err == nil {
+				t.Errorf("Unexpected error: %v", err)
+			} else if err.Error() != tc.err.Error() {
+				t.Errorf("Expected error: %v, got: %v", tc.err, err)
+			}
+		} else if tc.err != nil {
+			t.Errorf("Expected error: %v, but got none", tc.err)
+		}
 	}
 }
 
 /*
-	Test jwtOuth.go
+Test jwtOuth.go
 */
 func initSecrets() {
 	server.JWT_ACCESS_SECRET_KEY = "testAccessSecretKey"
@@ -82,9 +82,9 @@ func TestJWTFunctions(t *testing.T) {
 		testFunc    func() error
 	}{
 		{
-			name:     "Generate Secret Key",
-			mobile:   "",
-			isActive: false,
+			name:        "Generate Secret Key",
+			mobile:      "",
+			isActive:    false,
 			expectedErr: nil,
 			testFunc: func() error {
 				_, err := GenerateSecretKey(32)
@@ -92,9 +92,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Generate Access Token",
-			mobile:   "1234567890",
-			isActive: true,
+			name:        "Generate Access Token",
+			mobile:      "1234567890",
+			isActive:    true,
 			expectedErr: nil,
 			testFunc: func() error {
 				_, err := GenerateAccessToken("1234567890", true)
@@ -102,9 +102,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Generate Refresh Token",
-			mobile:   "1234567890",
-			isActive: true,
+			name:        "Generate Refresh Token",
+			mobile:      "1234567890",
+			isActive:    true,
 			expectedErr: nil,
 			testFunc: func() error {
 				_, err := GenerateRefreshToken("1234567890", true)
@@ -112,9 +112,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Validate Access Token",
-			mobile:   "1234567890",
-			isActive: true,
+			name:        "Validate Access Token",
+			mobile:      "1234567890",
+			isActive:    true,
 			expectedErr: nil,
 			testFunc: func() error {
 				token, err := GenerateAccessToken("1234567890", true)
@@ -126,9 +126,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Invalid Access Token",
-			mobile:   "",
-			isActive: false,
+			name:        "Invalid Access Token",
+			mobile:      "",
+			isActive:    false,
 			expectedErr: errors.New("error expected"),
 			testFunc: func() error {
 				_, err := ValidateToken("invalidToken")
@@ -136,9 +136,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Refresh Tokens",
-			mobile:   "1234567890",
-			isActive: true,
+			name:        "Refresh Tokens",
+			mobile:      "1234567890",
+			isActive:    true,
 			expectedErr: nil,
 			testFunc: func() error {
 				refreshToken, err := GenerateRefreshToken("1234567890", true)
@@ -150,9 +150,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Invalid Token Type for Refresh",
-			mobile:   "1234567890",
-			isActive: true,
+			name:        "Invalid Token Type for Refresh",
+			mobile:      "1234567890",
+			isActive:    true,
 			expectedErr: errors.New("error expected"),
 			testFunc: func() error {
 				accessToken, err := GenerateAccessToken("1234567890", true)
@@ -164,9 +164,9 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 		{
-			name:     "Expired Access Token",
-			mobile:   "1234567890",
-			isActive: true,
+			name:        "Expired Access Token",
+			mobile:      "1234567890",
+			isActive:    true,
 			expectedErr: errors.New("error expected"),
 			testFunc: func() error {
 				server.JWT_ACCESS_EXPIRATION_TIME = time.Millisecond * 100
@@ -225,7 +225,6 @@ func TestJWTFunctions(t *testing.T) {
 			},
 		},
 	}
-
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

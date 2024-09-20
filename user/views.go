@@ -6,8 +6,7 @@ import (
 	"fmt"
 )
 
-
-func CreateUserView(request server.HttpRequest) (server.HttpResponse) {
+func CreateUserView(request server.HttpRequest) server.HttpResponse {
 	if request.Method != "POST" {
 		return server.HTTP405
 	}
@@ -41,7 +40,7 @@ func CreateUserView(request server.HttpRequest) (server.HttpResponse) {
 	return response
 }
 
-func VerifyUserView(request server.HttpRequest) (server.HttpResponse) {
+func VerifyUserView(request server.HttpRequest) server.HttpResponse {
 	if request.Method != "POST" {
 		return server.HTTP405
 	}
