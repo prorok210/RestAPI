@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -117,6 +118,20 @@ func (resp *HttpResponse) SetHeader(key string, value string) {
 		resp.Headers = make(map[string]string)
 	}
 	resp.Headers[key] = value
+}
+
+
+func (resp *HttpResponse) Serialize(data interface{}) error {
+	if data == nil {
+		return errors.New("Data is nil")
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	resp.Body = string(jsonData)
+	return nil
 }
 
 /*

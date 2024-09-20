@@ -79,6 +79,50 @@ func TestSetHeader (t *testing.T) {
 	}
 }
 
+func TestSerialize(t *testing.T) {
+	testCases := []struct {
+		data          	interface{}
+		expectedResult 	string
+		expectedError	error
+	}{
+		{
+			"test", `"test"`,nil,
+		},
+		{
+			123, `123`, nil,
+		},
+		{
+			map[string]interface{}{
+				"key": "value",
+				"key2": "value2",
+			}, 
+			`{"key":"value","key2":"value2"}`,
+			nil,
+		},
+		{
+			nil, "", errors.New("Data is nil"),
+		},
+	}
+
+	for i, testCase := range testCases {
+		testResponse := new(HttpResponse)
+		err := testResponse.Serialize(testCase.data)
+
+		if err != nil {
+			if testCase.expectedError == nil {
+				t.Errorf("Test case %d: Unexpected error: %v", i, err)
+			} else if err.Error() != testCase.expectedError.Error() {
+				t.Errorf("Test case %d: Expected error '%v', but got '%v'", i, testCase.expectedError, err)
+			}
+		} else if testCase.expectedError != nil {
+			t.Errorf("Test case %d: Expected error but got nil", i)
+		}
+
+		if err == nil && testResponse.Body != testCase.expectedResult {
+			t.Errorf("Test case %d: Unexpected result: got '%s', want '%s'", i, testResponse.Body, testCase.expectedResult)
+		}
+	}
+}
 /*
 	server.go testing
 */
