@@ -20,6 +20,13 @@ func genareteOTP() string {
 
 
 func (u *User) SendSMS(message string) error {
+	if u.Mobile == "" {
+		return errors.New("Mobile number is empty")
+	}
+	if message == "" {
+		return errors.New("Message is empty")
+	}
+
 	url := "https://api.exolve.ru/messaging/v1/SendSMS"
 
 	smsJson := fmt.Sprintf(`{"number": "%s", "destination": "%s", "text": "%s"}`, server.MTS_API_NUMBER, u.Mobile, message)

@@ -82,7 +82,6 @@ func TestSetHeader (t *testing.T) {
 /*
 	server.go testing
 */
-
 func TestCreateServer(t *testing.T) {
 	testCases := []struct {
 		mainApplication RequestHandler
@@ -135,7 +134,6 @@ func TestStartServer(t *testing.T) {
 /*
 	middlewares.go testing
 */
-
 func TestIsAllowedHostMiddleware(t *testing.T) {
 	testCases := []struct {
 		clientAddr string
@@ -169,11 +167,9 @@ func TestIsAllowedHostMiddleware(t *testing.T) {
 func TestReqMiddleware(t *testing.T) {
 	connMock := &ConnMock{
         WriteFunc: func(b []byte) (n int, err error) {
-            // Имитация успешной записи
             return len(b), nil
         },
         CloseFunc: func() error {
-            // Имитация успешного закрытия
             return nil
         },
     }
@@ -241,6 +237,10 @@ func TestReqMiddleware(t *testing.T) {
 				t.Errorf("Test case %d: Expected error %s, but got %s", i, testCase.expectedError, err)
 			}
 		}
+
+		if err := connMock.Close(); err != nil {
+			t.Errorf("Test case %d: Failed to close connection: %s", i, err)
+		}
 	}
 }
 
@@ -248,7 +248,10 @@ func TestKeepAliveMiddleware(t *testing.T) {
 	connMock := &ConnMock{
 		SetDeadlineFunc: func(t time.Time) error {
 			return nil
-	},
+		},
+		CloseFunc: func() error {
+				return nil
+		},
 	}
 
 	testCases := []struct {
@@ -295,6 +298,10 @@ func TestKeepAliveMiddleware(t *testing.T) {
 			} else if err.Error() != testCase.expectedError.Error() {
 				t.Errorf("Test case %d: Expected error %s, but got %s", i, testCase.expectedError, err)
 			}
+		}
+
+		if err := connMock.Close(); err != nil {
+			t.Errorf("Test case %d: Failed to close connection: %s", i, err)
 		}
 	}
 }

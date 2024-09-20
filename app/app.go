@@ -10,6 +10,9 @@ import (
 )
 
 func MainApplication(request *server.HttpRequest) ([]byte, error) {
+	if request == nil {
+		return server.HTTP400.ToBytes(), nil
+	}
 	view := router(request.Url)
 
 	if view == nil {	

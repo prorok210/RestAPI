@@ -3,7 +3,6 @@ package main
 import (
 	"RestAPI/app"
 	"RestAPI/server"
-	"RestAPI/user"
 	"fmt"
 	"log"
 )
@@ -22,7 +21,7 @@ func main() {
 		log.Println("Error initializing environment", er)
 		return
 	}
-	fmt.Print(user.GenerateSecretKey(64))
+
 	er = serv.Start()
 	if er != nil {
 		log.Println("Error starting server", er)

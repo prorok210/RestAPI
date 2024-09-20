@@ -24,6 +24,9 @@ func GenerateSecretKey(length int) (string, error) {
 
 
 func GenerateAccessToken(mobile string, isActive bool) (string, error) {
+	if mobile == "" {
+		return "", errors.New("Mobile number is empty")
+	}
 	claims := jwt.MapClaims{
 		"mobile": mobile,
 		"isActive": isActive,
@@ -36,6 +39,9 @@ func GenerateAccessToken(mobile string, isActive bool) (string, error) {
 }
 
 func GenerateRefreshToken(mobile string, isActive bool) (string, error) {
+	if mobile == "" {
+		return "", errors.New("Mobile number is empty")
+	}
 	claims := jwt.MapClaims{
 		"mobile": mobile,
 		"isActive": isActive,
@@ -78,7 +84,7 @@ func RefreshTokens(refreshTokenString string) (string, string, error) {
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["type"] != "refresh" {
+	if !ok || claims["token_type"] != "refresh" {
 		return "", "", errors.New("Invalid token type")
 	}
 	mobile, isActive := claims["mobile"].(string), claims["isActive"].(bool)
