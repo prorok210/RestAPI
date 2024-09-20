@@ -39,9 +39,7 @@ func (u *User) SendSMS(message string) error {
 		log.Println("Error sending request:", err)
 		return err
 	}
-	log.Println(resp)
 	defer resp.Body.Close()
-	log.Println("Response Status:", resp.Status)
 
 	if resp.Status == "200 OK" {
 		return nil

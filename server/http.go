@@ -52,6 +52,9 @@ func (rqst *HttpRequest) ParseRequest(buffer []byte) (error) {
 	rqst.Method = requestLine[0]
 	rqst.Url = requestLine[1]
 	rqst.Version = requestLine[2]
+	if rqst.Method == "" || rqst.Url == "" || rqst.Version == "" {
+		return errors.New("Invalid request line")
+	}
 
 	rqst.Headers = make(map[string]string)
 
@@ -106,7 +109,13 @@ func (rqst *HttpRequest) ToBytes() []byte {
 }
 
 
-func (resp *HttpResponse) SetHeader(key, value string) {
+func (resp *HttpResponse) SetHeader(key string, value string) {
+	if key == "" || value == "" {
+		return
+	}
+	if resp.Headers == nil {
+		resp.Headers = make(map[string]string)
+	}
 	resp.Headers[key] = value
 }
 

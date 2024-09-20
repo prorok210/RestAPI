@@ -22,6 +22,7 @@ const (
 var ALLOWED_HOSTS = []string{
 	"localhost",
 	"127.0.0.1",
+	"77.232.37.23",
 	// "::1",
 }
 
@@ -79,7 +80,6 @@ func InitEnv() error {
 		log.Fatalf("Error env load %v", err)
 		return err
 	}
-	
 
 	return nil
 }

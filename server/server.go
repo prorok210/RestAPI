@@ -4,12 +4,18 @@ import (
 	"errors"
 	"log"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type RequestHandler func(request *HttpRequest) ([]byte, error)
+
+//go:generate moq --out=mocks/Conn_moq_test.go . Conn
+type Conn interface {
+    net.Conn
+}
 
 type Server struct {
 	servAddr 		string
@@ -18,7 +24,17 @@ type Server struct {
 }
 
 func CreateServer(mainApplication RequestHandler) (*Server, error) {
+	regex := regexp.MustCompile(`^([a-zA-Z0-9.-]+):([0-9]{1,5})$`)
 	addr:= HOST + ":" + strconv.Itoa(PORT)
+	if !regex.MatchString(addr) {
+		log.Println("Invalid address format")
+		return nil, errors.New("Invalid address format")
+	}
+	if mainApplication == nil {
+		log.Println("Main application handler is not set")
+		return nil, errors.New("Main application handler is not set")
+	}
+	
 	server := &Server{
 		servAddr: addr,
 		handleApp: 	mainApplication,
@@ -28,6 +44,16 @@ func CreateServer(mainApplication RequestHandler) (*Server, error) {
 
 func (s* Server) Start() error {
 	log.Println("Starting server ...")
+	if s == nil {
+		log.Println("Server is not created")
+		return errors.New("Server is not created")
+	}
+
+	if s.servAddr == "" || s.handleApp == nil {
+		log.Println("Server address or handle func is not set")
+		return errors.New("Server address or handle func is not set")
+	}
+
 	listener, er := net.Listen("tcp", s.servAddr)
 	if er != nil {
 		log.Println("Error starting server", er)
@@ -37,9 +63,24 @@ func (s* Server) Start() error {
 
 	log.Println("Server started successfully on ", s.servAddr)
 
-	s.Listen()
+	go s.Listen()
 
 	return nil
+}
+
+func (s* Server) Stop() {
+	if s == nil {
+		log.Println("Server is not created")
+		return
+	}
+
+	if s.listener == nil {
+		log.Println("Server is not started")
+		return
+	}
+
+	log.Println("Stopping server ...")
+	s.listener.Close()
 }
 
 func (s* Server) Listen(){
@@ -65,7 +106,7 @@ func (s* Server) Listen(){
 }
 
 
-func (s* Server) ConnProcessing(clientConn net.Conn) {
+func (s* Server) ConnProcessing(clientConn Conn) {
 	defer clientConn.Close()
 	defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
 
@@ -134,84 +175,4 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 			return
 		}
 	}
-}
-
-
-func isAllowedHostMiddleware(clientAddr string) bool {
-	for _, allowedHost := range ALLOWED_HOSTS {
-		if strings.Split(clientAddr, ":")[0] == allowedHost {
-			return true
-		}
-	}
-	return false
-}
-
-func reqMiddleware(request *HttpRequest, clientConn net.Conn ) (error) {
-
-	methodFlag := false
-	for _, allowedMethod := range ALLOWED_METHODS {
-		if request.Method == allowedMethod {
-			methodFlag = true
-			break
-		}
-	}
-	if !methodFlag {
-		clientConn.Write(HTTP405.ToBytes())
-		return errors.New("Method not allowed")
-	}
-
-	contentTypeFlag := false
-	for _, supportedMediaType := range SUPPORTED_MEDIA_TYPES {
-		if request.Body == "" {
-			contentTypeFlag = true
-			break
-		}
-		if request.Headers["Content-Type"] == supportedMediaType {
-			contentTypeFlag = true
-			break
-		}
-	}
-	if !contentTypeFlag {
-		clientConn.Write(HTTP415.ToBytes())
-		return errors.New("Unsupported media type")
-	}
-
-	contentLengthStr, hasContentLength := request.Headers["Content-Length"]
-
-	if hasContentLength {
-		contentLength, err := strconv.Atoi(contentLengthStr)
-		if err != nil {
-			log.Println("Invalid Content-Length:", contentLengthStr)
-			clientConn.Write(HTTP411.ToBytes())
-			return errors.New("invalid Content-Length header")
-		}
-	
-		if contentLength != len(request.Body) {
-			clientConn.Write(HTTP411.ToBytes())
-			return errors.New("Content-Length does not match body length")
-		}
-	
-	} else if len(request.Body) > 0 {
-		clientConn.Write(HTTP411.ToBytes())
-		return errors.New("Content-Length required")
-	}
-
-	return nil
-}
-
-func keepAliveMiddleware(request *HttpRequest, clientConn net.Conn) (error) {
-	for key := range request.Headers {
-		if key == "Connection" {
-			if request.Headers[key] == "close" {
-				return errors.New("Connection: close")
-			}
-			if request.Headers[key] == "keep-alive" {
-				clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
-			}
-			if request.Headers[key] == "" {
-				return errors.New("Connection: close")
-			}
-		}
-	}
-	return nil
 }

@@ -18,7 +18,7 @@ func MainApplication(request *server.HttpRequest) ([]byte, error) {
 
 	response := view(*request)
 	if response.Body != "" {
-		response.Headers["Content-Length"] = strconv.Itoa(len(response.Body))
+		response.SetHeader("Content-Length", strconv.Itoa(len(response.Body)))
 	}
 
 	return response.ToBytes(), nil

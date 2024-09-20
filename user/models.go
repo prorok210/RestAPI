@@ -18,6 +18,7 @@ type Tokens struct {
 	UserID 				string
 	AccessTokenHash 	string
 	RefreshTokenHash 	string
+	ExpiredAt 			string
 	CreateAt 			string
 	UpdateAt 			string
 }

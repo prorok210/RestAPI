@@ -14,8 +14,6 @@ func CreateUserView(request server.HttpRequest) (server.HttpResponse) {
 
 	jsonString := request.Body
 
-	fmt.Println("jsonString:", jsonString)
-
 	user := new(User)
 
 	err := json.Unmarshal([]byte(jsonString), user)
@@ -48,6 +46,12 @@ func VerifyUserView(request server.HttpRequest) (server.HttpResponse) {
 		return server.HTTP405
 	}
 
+	if request.Body == "" {
+		response := server.HTTP400
+		response.Body = `{"Message": "Invalid JSON"}`
+		return response
+	}
+
 	jsonString := request.Body
 
 	tmpUser := new(User)
@@ -56,6 +60,12 @@ func VerifyUserView(request server.HttpRequest) (server.HttpResponse) {
 	if err != nil {
 		response := server.HTTP400
 		response.Body = `{"Message": "Invalid JSON"}`
+		return response
+	}
+
+	if len(userStore) == 0 {
+		response := server.HTTP400
+		response.Body = `{"Message": "User not found"}`
 		return response
 	}
 
