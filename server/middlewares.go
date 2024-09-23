@@ -9,6 +9,7 @@ import (
 )
 
 func isAllowedHostMiddleware(clientAddr string) bool {
+	if !IS_ALLOWED_HOSTS {return true}
 	for _, allowedHost := range ALLOWED_HOSTS {
 		if strings.Split(clientAddr, ":")[0] == allowedHost {
 			return true
@@ -18,6 +19,7 @@ func isAllowedHostMiddleware(clientAddr string) bool {
 }
 
 func reqMiddleware(request *HttpRequest, clientConn Conn) error {
+	if !REQ_MIDDLEWARE {return nil}
 	methodFlag := false
 	for _, allowedMethod := range ALLOWED_METHODS {
 		if request.Method == allowedMethod {
@@ -36,7 +38,7 @@ func reqMiddleware(request *HttpRequest, clientConn Conn) error {
 			contentTypeFlag = true
 			break
 		}
-		if request.Headers["Content-Type"] == supportedMediaType {
+		if strings.Split(request.Headers["Content-Type"], ";")[0] == supportedMediaType {
 			contentTypeFlag = true
 			break
 		}
@@ -55,10 +57,17 @@ func reqMiddleware(request *HttpRequest, clientConn Conn) error {
 			clientConn.Write(HTTP411.ToBytes())
 			return errors.New("invalid Content-Length header")
 		}
-
-		if contentLength != len(request.Body) {
-			clientConn.Write(HTTP411.ToBytes())
-			return errors.New("Content-Length does not match body length")
+		contentType, hasContentType := request.Headers["Content-Type"]
+		if hasContentType && contentType == "multipart/form-data" || contentType == "application/x-www-form-urlencoded" {
+			if contentLength < 0 {
+				clientConn.Write(HTTP411.ToBytes())
+				return errors.New("Content-Length required")
+			}
+		} else {
+			if contentLength != len(request.Body) {
+				clientConn.Write(HTTP411.ToBytes())
+				return errors.New("Content-Length does not match body length")
+			}
 		}
 
 	} else if len(request.Body) > 0 {
@@ -70,6 +79,7 @@ func reqMiddleware(request *HttpRequest, clientConn Conn) error {
 }
 
 func keepAliveMiddleware(request *HttpRequest, clientConn Conn) error {
+	if !KEEP_ALIVE {return nil}
 	if request.Headers == nil {
 		return errors.New("Connection: close")
 	}

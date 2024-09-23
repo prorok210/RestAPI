@@ -1,8 +1,12 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
+	"mime"
+	"mime/multipart"
 	"strconv"
 	"strings"
 )
@@ -11,11 +15,20 @@ import (
 Структуры для работы с HTTP-запросами и ответами
 */
 type HttpRequest struct {
-	Method  string
-	Url     string
-	Version string
-	Headers map[string]string
-	Body    string
+	Method  	string
+	Url     	string
+	Version 	string
+	Headers 	map[string]string
+	Body    	string
+	FormData 	*FormData
+}
+
+type FormData struct {
+	Fields	map[string]string
+	Files  	map[string] struct{
+				FileName string
+				FileData []byte
+			}
 }
 
 type HttpResponse struct {
@@ -32,6 +45,7 @@ type HttpResponse struct {
 	ToString() - преобразование HTTP-запроса в строку
 	ToBytes() - преобразование HTTP-ответа в байтовый массив для отправки по сети
 	SetHeader() - установка заголовка в HTTP-ответе
+	ParseFormData() - разбор multipart/form-data из тела HTTP-запроса
 	Serialize() - сериализация данных в JSON и запись в тело HTTP-ответа
 */
 
@@ -115,6 +129,69 @@ func (resp *HttpResponse) SetHeader(key string, value string) {
 	resp.Headers[key] = value
 }
 
+func (req *HttpRequest) ParseFormData() error {
+	req.FormData = &FormData{
+		Fields: make(map[string]string),
+		Files:  make(map[string]struct{
+			FileName string
+			FileData []byte
+		}),
+	}
+
+	contentType := req.Headers["Content-Type"]
+	mediaType, params, err := mime.ParseMediaType(contentType)
+	if err != nil || mediaType != "multipart/form-data" {
+		return errors.New("invalid Content-Type")
+	}
+
+	boundary, ok := params["boundary"]
+	if !ok {
+		return errors.New("boundary not found in Content-Type")
+	}
+
+	reader := multipart.NewReader(bytes.NewReader([]byte(req.Body)), boundary)
+
+	for {
+		part, err := reader.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		name := part.FormName()
+		if name == "" {
+			return errors.New("invalid Content-Disposition: name not found")
+		}
+
+		filename := part.FileName()
+		if filename != "" {
+			fileData, err := io.ReadAll(part)
+			if err != nil {
+				return err
+			}
+			req.FormData.Files[name] = struct{
+				FileName string
+				FileData []byte
+			}{
+				FileName: filename,
+				FileData: fileData,
+			}
+		} else {
+			fieldValue, err := io.ReadAll(part)
+			if err != nil {
+				return err
+			}
+			req.FormData.Fields[name] = string(fieldValue)
+		}
+	}
+
+	return nil
+}
+
+
+
 func (resp *HttpResponse) Serialize(data interface{}) error {
 	if data == nil {
 		return errors.New("Data is nil")
@@ -127,6 +204,8 @@ func (resp *HttpResponse) Serialize(data interface{}) error {
 	resp.Body = string(jsonData)
 	return nil
 }
+
+
 
 /*
 Стандартные HTTP-ответы

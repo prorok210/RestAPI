@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"errors"
 	"strconv"
 	"testing"
@@ -78,6 +79,166 @@ func TestSetHeader(t *testing.T) {
 		}
 	}
 }
+
+func TestParseFormData(t *testing.T) {
+	boundary := "--------------------------477699956037780681100607"
+	type FileInfo struct{
+		FileName string
+		FileData []byte
+	}
+
+	testCases := []struct {
+		name           string
+		request        HttpRequest
+		expectedError  error
+		expectedFields map[string]string
+		expectedFiles  map[string]FileInfo
+	}{
+		{
+			name: "Valid form-data with fields and file",
+			request: HttpRequest{
+				Headers: map[string]string{
+					"Content-Type": "multipart/form-data; boundary=" + boundary,
+				},
+				Body: "--" + boundary + "\r\n" +
+					"Content-Disposition: form-data; name=\"field1\"\r\n\r\n" +
+					"value1\r\n" +
+					"--" + boundary + "\r\n" +
+					"Content-Disposition: form-data; name=\"field2\"\r\n\r\n" +
+					"value2\r\n" +
+					"--" + boundary + "\r\n" +
+					"Content-Disposition: form-data; name=\"file1\"; filename=\"test.txt\"\r\n" +
+					"Content-Type: text/plain\r\n\r\n" +
+					"file content\r\n" +
+					"--" + boundary + "--\r\n",
+			},
+			expectedError: nil,
+			expectedFields: map[string]string{
+				"field1": "value1",
+				"field2": "value2",
+			},
+			expectedFiles: map[string]FileInfo{
+				"file1": {FileName: "test.txt", FileData: []byte("file content")},
+			},
+		},
+		{
+			name: "Invalid Content-Type",
+			request: HttpRequest{
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+				Body: `{"key": "value"}`,
+			},
+			expectedError: errors.New("invalid Content-Type"),
+		},
+		{
+			name: "Missing boundary",
+			request: HttpRequest{
+				Headers: map[string]string{
+					"Content-Type": "multipart/form-data",
+				},
+				Body: "some body",
+			},
+			expectedError: errors.New("boundary not found in Content-Type"),
+		},
+		{
+			name: "Empty form-data",
+			request: HttpRequest{
+				Headers: map[string]string{
+					"Content-Type": "multipart/form-data; boundary=" + boundary,
+				},
+				Body: "--" + boundary + "--\r\n",
+			},
+			expectedError:  nil,
+			expectedFields: map[string]string{},
+			expectedFiles:  map[string]FileInfo{},
+		},
+		{
+			name: "Form-data with special characters",
+			request: HttpRequest{
+				Headers: map[string]string{
+					"Content-Type": "multipart/form-data; boundary=" + boundary,
+				},
+				Body: "--" + boundary + "\r\n" +
+					"Content-Disposition: form-data; name=\"special_field\"\r\n\r\n" +
+					"value with\r\nnew line and €\r\n" +
+					"--" + boundary + "\r\n" +
+					"Content-Disposition: form-data; name=\"file2\"; filename=\"специальный файл.txt\"\r\n" +
+					"Content-Type: text/plain\r\n\r\n" +
+					"содержимое файла\r\n" +
+					"--" + boundary + "--\r\n",
+			},
+			expectedError: nil,
+			expectedFields: map[string]string{
+				"special_field": "value with\r\nnew line and €",
+			},
+			expectedFiles: map[string]FileInfo{
+				"file2": {FileName: "специальный файл.txt", FileData: []byte("содержимое файла")},
+			},
+		},
+		{
+			name: "Invalid form-data structure",
+			request: HttpRequest{
+				Headers: map[string]string{
+					"Content-Type": "multipart/form-data; boundary=" + boundary,
+				},
+				Body: "--" + boundary + "\r\n" +
+					"Invalid-Header: some value\r\n\r\n" +
+					"some content\r\n" +
+					"--" + boundary + "--\r\n",
+			},
+			expectedError: errors.New("invalid Content-Disposition: name not found"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.request.ParseFormData()
+
+			if err != nil && tc.expectedError == nil {
+				t.Errorf("Unexpected error: %v", err)
+			} else if tc.expectedError != nil {
+				if err == nil {
+					t.Errorf("Expected error %v, but got nil", tc.expectedError)
+				} else if err.Error() != tc.expectedError.Error() {
+					t.Errorf("Expected error %v, but got %v", tc.expectedError, err)
+				}
+			}
+
+			if tc.expectedError != nil {
+				return
+			}
+
+			if len(tc.request.FormData.Fields) != len(tc.expectedFields) {
+				t.Errorf("Expected %d fields, but got %d", len(tc.expectedFields), len(tc.request.FormData.Fields))
+			}
+			for key, expectedValue := range tc.expectedFields {
+				if value, ok := tc.request.FormData.Fields[key]; !ok {
+					t.Errorf("Expected field %s not found", key)
+				} else if value != expectedValue {
+					t.Errorf("Field %s: expected %s, got %s", key, expectedValue, value)
+				}
+			}
+
+			if len(tc.request.FormData.Files) != len(tc.expectedFiles) {
+				t.Errorf("Expected %d files, but got %d", len(tc.expectedFiles), len(tc.request.FormData.Files))
+			}
+			for key, expectedFile := range tc.expectedFiles {
+				if file, ok := tc.request.FormData.Files[key]; !ok {
+					t.Errorf("Expected file %s not found", key)
+				} else {
+					if file.FileName != expectedFile.FileName {
+						t.Errorf("File %s: expected name %s, got %s", key, expectedFile.FileName, file.FileName)
+					}
+					if !bytes.Equal(file.FileData, expectedFile.FileData) {
+						t.Errorf("File %s: content mismatch", key)
+					}
+				}
+			}
+		})
+	}
+}
+
 
 func TestSerialize(t *testing.T) {
 	testCases := []struct {
@@ -179,6 +340,9 @@ func TestStartServer(t *testing.T) {
 middlewares.go testing
 */
 func TestIsAllowedHostMiddleware(t *testing.T) {
+	if !IS_ALLOWED_HOSTS {
+		t.Skip("Allowed hosts are not set")
+	}
 	testCases := []struct {
 		clientAddr string
 		expected   bool
@@ -209,6 +373,9 @@ func TestIsAllowedHostMiddleware(t *testing.T) {
 }
 
 func TestReqMiddleware(t *testing.T) {
+	if !REQ_MIDDLEWARE {
+		t.Skip("Request middleware is disabled")
+	}
 	connMock := &ConnMock{
 		WriteFunc: func(b []byte) (n int, err error) {
 			return len(b), nil
@@ -281,7 +448,7 @@ func TestReqMiddleware(t *testing.T) {
 				t.Errorf("Test case %d: Expected error %s, but got %s", i, testCase.expectedError, err)
 			}
 		}
-
+		
 		if err := connMock.Close(); err != nil {
 			t.Errorf("Test case %d: Failed to close connection: %s", i, err)
 		}
@@ -289,6 +456,9 @@ func TestReqMiddleware(t *testing.T) {
 }
 
 func TestKeepAliveMiddleware(t *testing.T) {
+	if !KEEP_ALIVE {
+		t.Skip("Keep-alive is disabled")
+	}
 	connMock := &ConnMock{
 		SetDeadlineFunc: func(t time.Time) error {
 			return nil

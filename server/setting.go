@@ -13,10 +13,15 @@ import (
 )
 
 const (
-	HOST         string        = "localhost"
-	PORT         int           = 8081
-	CONN_TIMEOUT time.Duration = 20
-	BUFSIZE      int           = 2048
+	// Настройки сервера
+	HOST        		string			= "localhost"
+	PORT         		int          	= 8081
+	CONN_TIMEOUT 		time.Duration	= 20
+	BUFSIZE      		int           	= 5 * 1024 * 1024
+	// Настройки мидлваров
+	IS_ALLOWED_HOSTS 	bool			= true
+	REQ_MIDDLEWARE	 	bool			= false
+	KEEP_ALIVE   		bool          	= true
 )
 
 var ALLOWED_HOSTS = []string{

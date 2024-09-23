@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"regexp"
@@ -129,8 +130,9 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 			clientConn.Write(HTTP400.ToBytes())
 			continue
 		}
+		fmt.Println("Request:", string(buf[:bytesRead]))
 
-		log.Println(clientConn.RemoteAddr().String(), strings.Split(string(buf[:bytesRead]), "\n")[0])
+		// log.Println(clientConn.RemoteAddr().String(), strings.Split(string(buf[:bytesRead]), "\n")[0])
 
 		request := new(HttpRequest)
 		er = request.ParseRequest(buf[:bytesRead])
@@ -139,6 +141,7 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 			clientConn.Write(HTTP400.ToBytes())
 			continue
 		}
+		fmt.Println("Body: ", request.Body)
 
 		er = reqMiddleware(request, clientConn)
 		if er != nil {
