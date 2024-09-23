@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
 	"unicode"
 
@@ -95,9 +94,10 @@ func CreateTable(name string, obj interface{}) error {
 		if ormTag == "" {
 			return fmt.Errorf("field %s does not have a tag", field.Name)
 		} else if strings.Contains(ormTag, "ref") {
-			re := regexp.MustCompile(`ref.*?\)`)
+			// Ищем индекс подстроки "ref"
+			start := strings.Index(ormTag, "ref")
 
-			match := re.FindString(ormTag)
+			match := ormTag[start:]
 
 			ormTag = strings.Replace(ormTag, " "+match, "", -1)
 
