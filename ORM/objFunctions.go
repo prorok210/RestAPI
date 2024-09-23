@@ -85,6 +85,33 @@ func InitDB() error {
 	return nil
 }
 
+func CreateTable(name string, obj interface{}) error {
+	data := reflect.TypeOf(obj)
+
+	sqlQuery := "CREATE TABLE IF NOT EXISTS " + name + " ("
+
+	for i := 0; i < data.NumField(); i++ {
+		field := data.Field(i)
+		jsonTag := field.Tag.Get("orm")
+		if jsonTag == "" {
+			return fmt.Errorf("Field %s does not have a tag", field.Name)
+		}
+		sqlQuery += field.Name + " " + jsonTag + ", "
+	}
+	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
+	sqlQuery += ");"
+
+	fmt.Println(sqlQuery)
+
+	// _, err := conn.Exec(context.Background(), sqlQuery)
+	// if err != nil {
+	// 	log.Printf("Error creating table: %v", err)
+	// } else {
+	// 	fmt.Println("Table created successfully or already exists.")
+	// }
+	return nil
+}
+
 // Function for creating a new table object based on obj.TableName
 func Create(obj interface{}) error {
 	fmt.Println("CREATE", obj)
