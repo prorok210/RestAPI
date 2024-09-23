@@ -14,13 +14,14 @@ import (
 
 const (
 	// Настройки сервера
-	HOST        		string			= "localhost"
-	PORT         		int          	= 8081
+	HOST        		string			= "0.0.0.0"
+	PORT         		int          	= 8080
 	CONN_TIMEOUT 		time.Duration	= 20
+	WRITE_TIMEOUT 		time.Duration	= 20
 	BUFSIZE      		int           	= 5 * 1024 * 1024
 	// Настройки мидлваров
 	IS_ALLOWED_HOSTS 	bool			= true
-	REQ_MIDDLEWARE	 	bool			= false
+	REQ_MIDDLEWARE	 	bool			= true
 	KEEP_ALIVE   		bool          	= true
 )
 
@@ -28,7 +29,7 @@ var ALLOWED_HOSTS = []string{
 	"localhost",
 	"127.0.0.1",
 	"77.232.37.23",
-	// "::1",
+	"::1",
 }
 
 var ALLOWED_METHODS = []string{

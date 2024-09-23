@@ -362,6 +362,9 @@ func TestIsAllowedHostMiddleware(t *testing.T) {
 		{
 			"77.232.37.23:8080", true,
 		},
+		{
+			"[::1]:8888", true,
+		},
 	}
 
 	for i, testCase := range testCases {

@@ -1,13 +1,16 @@
 package server
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
-	"fmt"
+	"io"
 	"log"
 	"net"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -22,6 +25,7 @@ type Server struct {
 	servAddr  string
 	listener  net.Listener
 	handleApp RequestHandler
+	Mutex     *sync.Mutex 
 }
 
 func CreateServer(mainApplication RequestHandler) (*Server, error) {
@@ -39,6 +43,7 @@ func CreateServer(mainApplication RequestHandler) (*Server, error) {
 	server := &Server{
 		servAddr:  addr,
 		handleApp: mainApplication,
+		Mutex:    &sync.Mutex{},
 	}
 	return server, nil
 }
@@ -106,42 +111,78 @@ func (s *Server) Listen() {
 	}
 }
 
+
 func (s *Server) ConnProcessing(clientConn Conn) {
 	defer clientConn.Close()
 	defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
 
-	clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
-
-	buf := make([]byte, BUFSIZE)
-
 	for {
-		bytesRead, er := clientConn.Read(buf)
+		clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
+
+		receivedData, er := func(clientConn Conn) ([]byte, error) {
+			reader := bufio.NewReader(clientConn)
+
+			startLine, err := reader.ReadString('\n')
+			if err != nil {
+				return nil, err
+			}
+			startLine = strings.TrimSpace(startLine)
+		
+			headers := make([]byte, 0, 4096)
+			for {
+				line, err := reader.ReadBytes('\n')
+				headers = append(headers, line...)
+				if err != nil || len(bytes.TrimSpace(line)) == 0 {
+					break
+				}
+			}
+		
+			contentLength := 0
+			headerLines := bytes.Split(headers, []byte("\r\n"))
+			for _, line := range headerLines {
+				if bytes.HasPrefix(bytes.ToLower(line), []byte("content-length:")) {
+					parts := bytes.SplitN(line, []byte(":"), 2)
+					if len(parts) == 2 {
+						contentLength, _ = strconv.Atoi(string(bytes.TrimSpace(parts[1])))
+						break
+					}
+				}
+			}
+
+			body := make([]byte, contentLength)
+			_, err = io.ReadFull(reader, body)
+			if err != nil {
+				return nil, err
+			}
+		
+			fullRequest := append([]byte(startLine+"\r\n"), headers...)
+			fullRequest = append(fullRequest, body...)
+		
+			return fullRequest, nil
+		}(clientConn)
+
 		if er != nil {
 			if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
 				log.Println("Read timeout", netErr)
 				clientConn.Write(HTTP408.ToBytes())
-				return
-			}
-			if er.Error() == "EOF" {
+			} else if er == io.EOF {
 				log.Println("Connection closed by client")
-				return
+			} else {
+				log.Println("Error reading request", er)
+				clientConn.Write(HTTP400.ToBytes())
 			}
-			log.Println("Error reading request", er)
-			clientConn.Write(HTTP400.ToBytes())
-			continue
+			return
 		}
-		fmt.Println("Request:", string(buf[:bytesRead]))
 
-		// log.Println(clientConn.RemoteAddr().String(), strings.Split(string(buf[:bytesRead]), "\n")[0])
+		log.Println(clientConn.RemoteAddr().String(), strings.Split(string(receivedData), "\n")[0])
 
-		request := new(HttpRequest)
-		er = request.ParseRequest(buf[:bytesRead])
-		if er != nil {
-			log.Println("Error parsing request", er)
+		request := &HttpRequest{}
+		err := request.ParseRequest(receivedData)
+		if err != nil {
+			log.Println("Error parsing request", err)
 			clientConn.Write(HTTP400.ToBytes())
-			continue
+			return
 		}
-		fmt.Println("Body: ", request.Body)
 
 		er = reqMiddleware(request, clientConn)
 		if er != nil {
@@ -156,20 +197,13 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 			continue
 		}
 
-		go func() {
-			_, er = clientConn.Write(response)
-			if er != nil {
-				if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
-					log.Println("Write timeout", netErr)
-					clientConn.Write(HTTP408.ToBytes())
-					return
-				}
-				log.Println("Error writing response", er)
-				return
-			} else {
-				log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
-			}
-		}()
+		clientConn.SetWriteDeadline(time.Now().Add(WRITE_TIMEOUT * time.Second))
+		_, err = clientConn.Write(response)
+		if err != nil {
+			log.Println("Error writing response", err)
+			return
+		}
+		log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
 
 		er = keepAliveMiddleware(request, clientConn)
 		if er != nil {

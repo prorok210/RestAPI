@@ -2,7 +2,9 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -10,11 +12,26 @@ import (
 
 func isAllowedHostMiddleware(clientAddr string) bool {
 	if !IS_ALLOWED_HOSTS {return true}
+
+	host, _, err := net.SplitHostPort(clientAddr)
+	if err != nil {
+		host = clientAddr
+	}
+
+	fmt.Println("Host:", host)
 	for _, allowedHost := range ALLOWED_HOSTS {
-		if strings.Split(clientAddr, ":")[0] == allowedHost {
+		if host == allowedHost {
 			return true
 		}
+		allowedIP := net.ParseIP(allowedHost)
+		if allowedIP != nil {
+			clientIP := net.ParseIP(host)
+			if clientIP != nil && clientIP.Equal(allowedIP) {
+				return true
+			}
+		}
 	}
+
 	return false
 }
 
