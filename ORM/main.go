@@ -9,24 +9,14 @@ package main
 
 import (
 	"context"
-	"log"
-	"os"
+	"fmt"
 )
 
 func main() {
 	InitDB()
 	defer conn.Close(context.Background())
 
-	// Откройте файл для записи логов
-	logFile, err := os.OpenFile("logfile.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatalf("Error opening file: %v", err)
-	}
-	defer logFile.Close()
-
-	// log to file
-	log.SetOutput(logFile)
-
-	CreateTable("userses", User{})
+	err := CreateTable("userseseseses", User{})
+	fmt.Println(err)
 
 }

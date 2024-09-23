@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -21,7 +21,6 @@ func (dialog *Dialog) ToFields() ([]interface{}, []string) {
 
 // Generic function to extract fields
 func extractFields(obj interface{}) ([]interface{}, []string) {
-	fmt.Println("Extracting fields from an object:", obj)
 	// Getting the value and type of the object
 	val := reflect.ValueOf(obj).Elem()
 	typ := reflect.TypeOf(obj).Elem()
@@ -40,7 +39,6 @@ func extractFields(obj interface{}) ([]interface{}, []string) {
 		// Adding a field value to the list of values
 		values = append(values, val.Field(i).Interface())
 	}
-	fmt.Println("Data extracted successfully:")
 	return values, columns
 }
 
@@ -48,8 +46,7 @@ func InitDB() error {
 	var InitDBError error
 	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
 	if InitDBError != nil {
-		log.Printf("Database connect error: %v", InitDBError)
-		return fmt.Errorf("Database connect error: %v", InitDBError)
+		return fmt.Errorf("database connect error: %v", InitDBError)
 	}
 
 	fmt.Println("Successfully connected to the database.")
@@ -75,8 +72,7 @@ func InitDB() error {
 	for _, createTableSQL := range creatingTables {
 		_, err := conn.Exec(context.Background(), createTableSQL)
 		if err != nil {
-			log.Printf("Error creating table: %v", err)
-			return fmt.Errorf("Error creating table: %v", err)
+			return fmt.Errorf("error creating table: %v", err)
 		} else {
 			fmt.Println("Table created successfully or already exists.")
 		}
@@ -95,11 +91,20 @@ func CreateTable(name string, obj interface{}) error {
 		if field.Name == "TableName" {
 			continue
 		}
-		jsonTag := field.Tag.Get("orm")
-		if jsonTag == "" {
-			return fmt.Errorf("Field %s does not have a tag", field.Name)
+		ormTag := field.Tag.Get("orm")
+		if ormTag == "" {
+			return fmt.Errorf("field %s does not have a tag", field.Name)
+		} else if strings.Contains(ormTag, "ref") {
+			re := regexp.MustCompile(`ref.*?\)`)
+
+			match := re.FindString(ormTag)
+
+			ormTag = strings.Replace(ormTag, " "+match, "", -1)
+
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
+		} else {
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
 		}
-		sqlQuery += strings.ToLower(field.Name) + " " + jsonTag + ", "
 	}
 	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
 	sqlQuery += ");"
@@ -108,7 +113,7 @@ func CreateTable(name string, obj interface{}) error {
 
 	_, err := conn.Exec(context.Background(), sqlQuery)
 	if err != nil {
-		log.Printf("Error creating table: %v", err)
+		return fmt.Errorf("error creating table:", err)
 	} else {
 		fmt.Println("Table created successfully or already exists.")
 	}
@@ -137,8 +142,7 @@ func Create(obj interface{}) error {
 	fmt.Println(insertSQL)
 	_, err := conn.Exec(context.Background(), insertSQL, values...)
 	if err != nil {
-		log.Printf("Row insertion error: %v", err)
-		return fmt.Errorf("Row insertion error: %v", err)
+		return fmt.Errorf("row insertion error: %v", err)
 	}
 	fmt.Println("Row inserted successfully")
 	return nil
@@ -169,7 +173,7 @@ func Update(obj interface{}) error {
 	// Passing strings
 	_, err := conn.Exec(context.Background(), insertSQL)
 	if err != nil {
-		log.Printf("Row update error: %v", err)
+		return fmt.Errorf("row update error: %v", err)
 	}
 	fmt.Println("Row updated successfully")
 	return nil

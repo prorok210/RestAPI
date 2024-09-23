@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"reflect"
 
 	"github.com/jackc/pgx/v5"
@@ -11,8 +10,7 @@ const CONNECTIONDATA string = "host=localhost user=postgres password=admin dbnam
 
 // Connection to the database
 var (
-	conn    *pgx.Conn
-	logFile *os.File
+	conn *pgx.Conn
 	// Маппинг типов для создания дочерних объектов
 	tableRegistry = map[string]reflect.Type{
 		"users":   reflect.TypeOf(User{TableName: "users"}),

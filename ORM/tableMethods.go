@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 )
 
@@ -12,8 +11,7 @@ func (table *BaseTable) GetAll() error {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s;`, table.TableName)
 	rows, err := conn.Query(context.Background(), selectSQL)
 	if err != nil {
-		log.Printf("SELECT error: %v\n", err)
-		return fmt.Errorf("SELECT error: %v\n", err)
+		return fmt.Errorf("select error: %v", err)
 	}
 	defer rows.Close()
 
@@ -32,8 +30,7 @@ func (table *BaseTable) GetAll() error {
 
 		err := rows.Scan(valuePtrs...)
 		if err != nil {
-			log.Printf("Line scan error: %v\n", err)
-			return fmt.Errorf("Line scan error: %v\n", err)
+			return fmt.Errorf("line scan error: %v", err)
 		}
 
 		for i, fd := range fieldDescriptions {
@@ -43,15 +40,14 @@ func (table *BaseTable) GetAll() error {
 	}
 
 	if rows.Err() != nil {
-		log.Printf("Ошибка обработки строк: %v\n", rows.Err())
-		return fmt.Errorf("Ошибка обработки строк: %v\n", rows.Err())
+		return fmt.Errorf("line processing error: %v", rows.Err())
 	}
 	// Сделать return нужных структур, не забыть про поле tableName
 	return nil
 }
 
 // Фабричная функция для создания объектов на основании TableName
-func (table *BaseTable) newModel(fields map[string]interface{}) BaseCell {
+func (table *BaseTable) newModel(fields map[string]interface{}) (BaseCell, error) {
 	if modelType, ok := tableRegistry[table.TableName]; ok {
 		// Создание нового экземпляра нужного типа
 		modelValue := reflect.New(modelType).Elem()
@@ -65,8 +61,7 @@ func (table *BaseTable) newModel(fields map[string]interface{}) BaseCell {
 		model := modelValue.Addr().Interface().(BaseCell)
 
 		if model == nil {
-			fmt.Println("Неизвестная таблица:", table.TableName)
-			return nil
+			return nil, fmt.Errorf("model is nil")
 		}
 
 		// Заполнение модели данными из fields
@@ -77,24 +72,22 @@ func (table *BaseTable) newModel(fields map[string]interface{}) BaseCell {
 			reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
 		}
 
-		return model
+		return model, nil
 	}
-	return nil
+	return nil, fmt.Errorf("model not found in tableRegistry map")
 }
 
 func (table *BaseTable) getById(id uint) (interface{}, error) {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
 	rows, err := conn.Query(context.Background(), selectSQL, id)
 	if err != nil {
-		log.Printf("SELECT error: %v\n", err)
-		return nil, fmt.Errorf("SELECT error: %v\n", err)
+		return nil, fmt.Errorf("select error: %v", err)
 	}
 	defer rows.Close()
 
 	// Проверяем, есть ли строки в результате запроса
 	if !rows.Next() {
-		log.Printf("Row with id = %d not found\n", id)
-		return nil, fmt.Errorf("Row with id = %d not found\n", id)
+		return nil, fmt.Errorf("row with id = %d not found", id)
 	}
 
 	// Получаем метаданные столбцов (названия столбцов)
@@ -103,8 +96,7 @@ func (table *BaseTable) getById(id uint) (interface{}, error) {
 	// Получаем значения столбцов
 	values, err := rows.Values()
 	if err != nil {
-		log.Printf("Error getting row values: %v\n", err)
-		return nil, fmt.Errorf("Error getting row values: %v\n", err)
+		return nil, fmt.Errorf("error getting row values: %v", err)
 	}
 
 	// Создаем map для хранения данных
@@ -116,13 +108,15 @@ func (table *BaseTable) getById(id uint) (interface{}, error) {
 		result[columnName] = values[i]
 	}
 	fmt.Println(result)
-	obj := table.newModel(result)
+	obj, err := table.newModel(result)
+	if err != nil {
+		return nil, fmt.Errorf("error creating model: %v", err)
+	}
 	fmt.Println(obj)
 
 	// Проверка на ошибки после завершения итерации
 	if rows.Err() != nil {
-		log.Printf("string processing error: %v\n", rows.Err())
-		return nil, fmt.Errorf("string processing error: %v\n", rows.Err())
+		return nil, fmt.Errorf("string processing error: %v", rows.Err())
 	}
 
 	// Возвращаем пользователя и nil как ошибку, если всё прошло успешно

@@ -3,17 +3,16 @@ package main
 import (
 	"RestAPI/app"
 	"RestAPI/server"
-	"fmt"
 	"log"
 )
 
 func main() {
 	serv, er := server.CreateServer(app.MainApplication)
 	if er != nil {
-		fmt.Println("Error creating server", er)
+		log.Println("Error creating server", er)
 		return
 	}
-	
+
 	app.InitViews()
 
 	er = serv.Start()
@@ -22,4 +21,4 @@ func main() {
 		return
 	}
 	select {}
-}	
+}

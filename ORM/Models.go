@@ -19,7 +19,7 @@ type User struct {
 	TableName string
 	Id        uint   `orm:"serial primary key"`
 	Name      string `orm:"varchar(255) not null"`
-	Email     string `orm:"varchar(255) not null unique"`
+	Email     string `orm:"uint ref users(id)"`
 }
 
 // Table of dialogs
