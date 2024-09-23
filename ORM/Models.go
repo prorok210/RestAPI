@@ -17,9 +17,9 @@ type TableUsers struct {
 // User structure
 type User struct {
 	TableName string
-	Id        uint
-	Name      string
-	Email     string
+	Id        uint   `orm:"serial primary key"`
+	Name      string `orm:"varchar(255) not null"`
+	Email     string `orm:"varchar(255) not null unique"`
 }
 
 // Table of dialogs

@@ -92,23 +92,26 @@ func CreateTable(name string, obj interface{}) error {
 
 	for i := 0; i < data.NumField(); i++ {
 		field := data.Field(i)
+		if field.Name == "TableName" {
+			continue
+		}
 		jsonTag := field.Tag.Get("orm")
 		if jsonTag == "" {
 			return fmt.Errorf("Field %s does not have a tag", field.Name)
 		}
-		sqlQuery += field.Name + " " + jsonTag + ", "
+		sqlQuery += strings.ToLower(field.Name) + " " + jsonTag + ", "
 	}
 	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
 	sqlQuery += ");"
 
 	fmt.Println(sqlQuery)
 
-	// _, err := conn.Exec(context.Background(), sqlQuery)
-	// if err != nil {
-	// 	log.Printf("Error creating table: %v", err)
-	// } else {
-	// 	fmt.Println("Table created successfully or already exists.")
-	// }
+	_, err := conn.Exec(context.Background(), sqlQuery)
+	if err != nil {
+		log.Printf("Error creating table: %v", err)
+	} else {
+		fmt.Println("Table created successfully or already exists.")
+	}
 	return nil
 }
 

@@ -26,3 +26,4 @@
 2024/09/19 17:04:22 Dialog by id: &{dialogs 1 Mee MyFriends}
 2024/09/19 17:05:25 Dialog by id: &{dialogs 1 Mee MyFriends}
 2024/09/19 17:07:23 Dialog by id: &{dialogs 1 Mee MyFriends}
+2024/09/23 10:38:20 Error creating table: ОШИБКА: ошибка синтаксиса (примерное положение: "not") (SQLSTATE 42601)

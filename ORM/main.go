@@ -27,6 +27,6 @@ func main() {
 	// log to file
 	log.SetOutput(logFile)
 
-	CreateTable("users", User{})
+	CreateTable("userses", User{})
 
 }
