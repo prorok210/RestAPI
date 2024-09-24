@@ -14,12 +14,16 @@ type TableUsers struct {
 	BaseTable
 }
 
+type TableUsrees struct {
+	BaseTable
+}
+
 // User structure
 type User struct {
 	TableName string
 	Id        uint   `orm:"serial primary key"`
-	Name      string `orm:"varchar(255) not null"`
-	Email     string `orm:"int ref users(id) on delete cascade"`
+	Name      string `orm:"varchar not null"`
+	Email     string `orm:"varchar not null"`
 }
 
 // Table of dialogs
