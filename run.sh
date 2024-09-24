@@ -7,11 +7,11 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Building server..."
-go build main.go
+sudo go build main.go
 
 if [ $? -ne 0 ]; then
     echo "Build failed. Aborting server start."
     exit 1
 fi
 
-./main
+sudo ./main

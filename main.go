@@ -14,7 +14,7 @@ func main() {
 		return
 	}
 
-	app.InitViews()
+	app.InitHandlers()
 
 	er = server.InitEnv()
 	if er != nil {

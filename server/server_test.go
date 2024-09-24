@@ -92,7 +92,7 @@ func TestParseFormData(t *testing.T) {
 		request        HttpRequest
 		expectedError  error
 		expectedFields map[string]string
-		expectedFiles  map[string]FileInfo
+		expectedFiles  map[string][]FileInfo
 	}{
 		{
 			name: "Valid form-data with fields and file",
@@ -117,8 +117,10 @@ func TestParseFormData(t *testing.T) {
 				"field1": "value1",
 				"field2": "value2",
 			},
-			expectedFiles: map[string]FileInfo{
-				"file1": {FileName: "test.txt", FileData: []byte("file content")},
+			expectedFiles: map[string][]FileInfo{
+				"file1": {
+					{"test.txt", []byte("file content")},
+				},
 			},
 		},
 		{
@@ -151,7 +153,7 @@ func TestParseFormData(t *testing.T) {
 			},
 			expectedError:  nil,
 			expectedFields: map[string]string{},
-			expectedFiles:  map[string]FileInfo{},
+			expectedFiles:  map[string][]FileInfo{},
 		},
 		{
 			name: "Form-data with special characters",
@@ -172,8 +174,13 @@ func TestParseFormData(t *testing.T) {
 			expectedFields: map[string]string{
 				"special_field": "value with\r\nnew line and €",
 			},
-			expectedFiles: map[string]FileInfo{
-				"file2": {FileName: "специальный файл.txt", FileData: []byte("содержимое файла")},
+			expectedFiles: map[string][]FileInfo{
+				"file2": {
+					{
+						FileName: "специальный файл.txt",
+						FileData: []byte("содержимое файла"),
+					},
+				},
 			},
 		},
 		{
@@ -223,15 +230,32 @@ func TestParseFormData(t *testing.T) {
 			if len(tc.request.FormData.Files) != len(tc.expectedFiles) {
 				t.Errorf("Expected %d files, but got %d", len(tc.expectedFiles), len(tc.request.FormData.Files))
 			}
-			for key, expectedFile := range tc.expectedFiles {
-				if file, ok := tc.request.FormData.Files[key]; !ok {
-					t.Errorf("Expected file %s not found", key)
-				} else {
+			for key, expectedFiles := range tc.expectedFiles {
+				actualFiles, ok := tc.request.FormData.Files[key]
+				if !ok {
+					t.Errorf("No files found for key %s", key)
+					continue
+				}
+			
+				// Проверяем, что количество файлов совпадает
+				if len(actualFiles) != len(expectedFiles) {
+					t.Errorf("File %s: expected %d files, got %d", key, len(expectedFiles), len(actualFiles))
+					continue
+				}
+			
+				// Сравниваем каждый файл в массиве
+				for i := range expectedFiles {
+					expectedFile := expectedFiles[i]
+					file := actualFiles[i]
+			
+					// Проверяем имя файла
 					if file.FileName != expectedFile.FileName {
-						t.Errorf("File %s: expected name %s, got %s", key, expectedFile.FileName, file.FileName)
+						t.Errorf("File %s [%d]: expected name %s, got %s", key, i, expectedFile.FileName, file.FileName)
 					}
+			
+					// Проверяем содержимое файла
 					if !bytes.Equal(file.FileData, expectedFile.FileData) {
-						t.Errorf("File %s: content mismatch", key)
+						t.Errorf("File %s [%d]: content mismatch", key, i)
 					}
 				}
 			}

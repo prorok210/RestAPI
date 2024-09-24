@@ -17,6 +17,7 @@ import (
 type HttpRequest struct {
 	Method  	string
 	Url     	string
+	Query   	map[string]string
 	Version 	string
 	Headers 	map[string]string
 	Body    	string
@@ -25,7 +26,7 @@ type HttpRequest struct {
 
 type FormData struct {
 	Fields	map[string]string
-	Files  	map[string] struct{
+	Files  	map[string][]struct{
 				FileName string
 				FileData []byte
 			}
@@ -65,13 +66,26 @@ func (rqst *HttpRequest) ParseRequest(buffer []byte) error {
 		return errors.New("Invalid request line")
 	}
 	rqst.Method = requestLine[0]
-	rqst.Url = requestLine[1]
+	UrlAndQuery := strings.Split(requestLine[1], "?")
+	rqst.Url = UrlAndQuery[0]
 	rqst.Version = requestLine[2]
 	if rqst.Method == "" || rqst.Url == "" || rqst.Version == "" {
 		return errors.New("Invalid request line")
 	}
-
+	rqst.Query = make(map[string]string)
 	rqst.Headers = make(map[string]string)
+
+	if len(UrlAndQuery) > 1 {
+		queryParts := strings.Split(UrlAndQuery[1], "&")
+		for _, queryPart := range queryParts {
+			queryParam := strings.Split(queryPart, "=")
+			if len(queryParam) == 2 {
+				rqst.Query[queryParam[0]] = queryParam[1]
+			} else if len(queryParam) == 1 {
+				rqst.Query[queryParam[0]] = ""
+			}
+		}
+	}
 
 	i := 1
 	for i < len(lines) && lines[i] != "" {
@@ -132,7 +146,7 @@ func (resp *HttpResponse) SetHeader(key string, value string) {
 func (req *HttpRequest) ParseFormData() error {
 	req.FormData = &FormData{
 		Fields: make(map[string]string),
-		Files:  make(map[string]struct{
+		Files:  make(map[string][]struct{
 			FileName string
 			FileData []byte
 		}),
@@ -171,13 +185,14 @@ func (req *HttpRequest) ParseFormData() error {
 			if err != nil {
 				return err
 			}
-			req.FormData.Files[name] = struct{
+
+			req.FormData.Files[name] = append(req.FormData.Files[name], struct {
 				FileName string
 				FileData []byte
 			}{
 				FileName: filename,
 				FileData: fileData,
-			}
+			})
 		} else {
 			fieldValue, err := io.ReadAll(part)
 			if err != nil {

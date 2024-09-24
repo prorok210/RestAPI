@@ -7,6 +7,7 @@ package app
 import (
 	"RestAPI/server"
 	"fmt"
+	"mime"
 	"strconv"
 )
 
@@ -14,7 +15,8 @@ func MainApplication(request *server.HttpRequest) ([]byte, error) {
 	if request == nil {
 		return server.HTTP400.ToBytes(), nil
 	}
-	if request.Headers["Content-Type"] == "application/x-www-form-urlencoded" || request.Headers["Content-Type"] == "multipart/form-data" {
+	contentType, _, _ := mime.ParseMediaType(request.Headers["Content-Type"])
+	if contentType == "application/x-www-form-urlencoded" || contentType == "multipart/form-data" {
 		er := request.ParseFormData()
 		if er != nil {
 			fmt.Println("Error parsing form data:", er)

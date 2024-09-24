@@ -19,6 +19,7 @@ const (
 	CONN_TIMEOUT 		time.Duration	= 20
 	WRITE_TIMEOUT 		time.Duration	= 20
 	BUFSIZE      		int           	= 5 * 1024 * 1024
+	IMAGES_DIR   		string        	= "/media/images"
 	// Настройки мидлваров
 	IS_ALLOWED_HOSTS 	bool			= true
 	REQ_MIDDLEWARE	 	bool			= true
