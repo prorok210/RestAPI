@@ -18,10 +18,21 @@ type TableUsrees struct {
 	BaseTable
 }
 
+type TableMessages struct {
+	BaseTable
+}
+
+type Message struct {
+	TableName string
+	Id        int    `orm:"serial primary key"`
+	UserId    int    `orm:"int ref users(id)"`
+	Text      string `orm:"varchar not null"`
+}
+
 // User structure
 type User struct {
 	TableName string
-	Id        uint   `orm:"serial primary key"`
+	Id        int    `orm:"serial primary key"`
 	Name      string `orm:"varchar not null"`
 	Email     string `orm:"varchar not null"`
 }
@@ -34,7 +45,7 @@ type TableDialogs struct {
 // Dialog structure
 type Dialog struct {
 	TableName string
-	Id        uint
+	Id        int
 	Owner     string
 	Opponent  string
 }

@@ -18,6 +18,10 @@ func (dialog *Dialog) ToFields() ([]interface{}, []string) {
 	return extractFields(dialog)
 }
 
+func (message *Message) ToFields() ([]interface{}, []string) {
+	return extractFields(message)
+}
+
 // Generic function to extract fields
 func extractFields(obj interface{}) ([]interface{}, []string) {
 	// Getting the value and type of the object
@@ -88,6 +92,8 @@ func InitDB() error {
 func CreateTable(obj interface{}) error {
 	data := reflect.TypeOf(obj)
 
+	var tableName string
+
 	// Проверяем наличие поля
 	field, found := data.FieldByName("TableName")
 	if found {
@@ -96,7 +102,9 @@ func CreateTable(obj interface{}) error {
 		fieldValue := userValue.FieldByName("TableName")
 
 		if fieldValue.IsValid() {
-			fmt.Printf("Поле '%s' найдено в структуре. Значение: %v\n", field.Name, fieldValue.Interface())
+			tableName = fieldValue.String()
+
+			fmt.Printf("Поле '%s' найдено в структуре. Значение: %s\n", field.Name, tableName)
 		} else {
 			return fmt.Errorf("поле '%s' найдено, но его значение недоступно.", field.Name)
 		}
@@ -104,7 +112,7 @@ func CreateTable(obj interface{}) error {
 		return fmt.Errorf("Поле '%s' не найдено в структуре.\n", "TableName")
 	}
 
-	sqlQuery := "CREATE TABLE IF NOT EXISTS " + field.Name + " ("
+	sqlQuery := "CREATE TABLE IF NOT EXISTS " + tableName + " ("
 
 	for i := 0; i < data.NumField(); i++ {
 		field := data.Field(i)

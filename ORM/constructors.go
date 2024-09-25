@@ -19,3 +19,13 @@ func newDialog(owner string, opponent string) *Dialog {
 		Opponent:  opponent,
 	}
 }
+
+// User structure constructor
+func newMessage(userId int, text string) *Message {
+	return &Message{
+		TableName: "messages",
+		Id:        0, // The system will set the id after the SQL get func to the database
+		UserId:    userId,
+		Text:      text,
+	}
+}
