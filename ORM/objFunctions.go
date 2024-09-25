@@ -85,62 +85,61 @@ func InitDB() error {
 	return nil
 }
 
-// func CreateTable(obj interface{}) error {
-// 	data := reflect.TypeOf(obj)
+func CreateTable(obj interface{}) error {
+	data := reflect.TypeOf(obj)
 
-// 	// Проверяем наличие поля
-// 	field, found := data.FieldByName("TableName")
-// 	if found {
-// 		// Получаем значение поля
-// 		userValue := reflect.ValueOf(obj)
-// 		fieldValue := userValue.FieldByName("TableName")
+	// Проверяем наличие поля
+	field, found := data.FieldByName("TableName")
+	if found {
+		// Получаем значение поля
+		userValue := reflect.ValueOf(obj)
+		fieldValue := userValue.FieldByName("TableName")
 
-// 		if fieldValue.IsValid() {
-// 			fmt.Printf("Поле '%s' найдено в структуре. Значение: %v\n", field.Name, fieldValue.Interface())
-// 		} else {
-// 			fmt.Printf("Поле '%s' найдено, но его значение недоступно.\n", field.Name)
-// 		}
-// 	} else {
-// 		fmt.Printf("Поле '%s' не найдено в структуре.\n", "TableName")
-// 	}
+		if fieldValue.IsValid() {
+			fmt.Printf("Поле '%s' найдено в структуре. Значение: %v\n", field.Name, fieldValue.Interface())
+		} else {
+			return fmt.Errorf("поле '%s' найдено, но его значение недоступно.", field.Name)
+		}
+	} else {
+		return fmt.Errorf("Поле '%s' не найдено в структуре.\n", "TableName")
+	}
 
-// 	sqlQuery := "CREATE TABLE IF NOT EXISTS " + field.Name + " ("
+	sqlQuery := "CREATE TABLE IF NOT EXISTS " + field.Name + " ("
 
-// 	for i := 0; i < data.NumField(); i++ {
-// 		field := data.Field(i)
-// 		if field.Name == "TableName" {
-// 			continue
-// 		}
-// 		ormTag := field.Tag.Get("orm")
-// 		if ormTag == "" {
-// 			return fmt.Errorf("field %s does not have a tag", field.Name)
-// 		} else if strings.Contains(ormTag, "ref") {
-// 			// Ищем индекс подстроки "ref"
-// 			start := strings.Index(ormTag, "ref")
+	for i := 0; i < data.NumField(); i++ {
+		field := data.Field(i)
+		if field.Name == "TableName" {
+			continue
+		}
+		ormTag := field.Tag.Get("orm")
+		if ormTag == "" {
+			return fmt.Errorf("field %s does not have a tag", field.Name)
+		} else if strings.Contains(ormTag, "ref") {
+			// Ищем индекс подстроки "ref"
+			start := strings.Index(ormTag, "ref")
 
-// 			match := ormTag[start:]
+			match := ormTag[start:]
 
-// 			ormTag = strings.Replace(ormTag, " "+match, "", -1)
+			ormTag = strings.Replace(ormTag, " "+match, "", -1)
 
-// 			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
-// 		} else {
-// 			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
-// 		}
-// 	}
-// 	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
-// 	sqlQuery += ");"
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
+		} else {
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
+		}
+	}
+	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
+	sqlQuery += ");"
 
-// 	fmt.Println(sqlQuery)
+	fmt.Println(sqlQuery)
 
-// 	_, err := conn.Exec(context.Background(), sqlQuery)
-// 	if err != nil {
-// 		return fmt.Errorf("error creating table:", err)
-// 	} else {
-// 		fmt.Println("Table created successfully or already exists.")
-// 	}
-// 	tableRegistry[field.Name] = data
-// 	return nil
-// }
+	_, err := conn.Exec(context.Background(), sqlQuery)
+	if err != nil {
+		return fmt.Errorf("error creating table:", err)
+	} else {
+		fmt.Println("Table created successfully or already exists.")
+	}
+	return nil
+}
 
 // Function for creating a new table object based on obj.TableName
 func Create(obj interface{}) error {
