@@ -42,32 +42,31 @@ func (table *BaseTable) GetAll() error {
 	if rows.Err() != nil {
 		return fmt.Errorf("line processing error: %v", rows.Err())
 	}
-	// Сделать return нужных структур, не забыть про поле tableName
 	return nil
 }
 
-// Фабричная функция для создания объектов на основании TableName
+// Fabric function to create objects based on TableName
 func (table *BaseTable) newModel(fields map[string]interface{}) (BaseCell, error) {
 	if modelType, ok := tableRegistry[table.TableName]; ok {
-		// Создание нового экземпляра нужного типа
+		// Creating a new instance of the desired type
 		modelValue := reflect.New(modelType).Elem()
 
-		// Устанавливаем значение поля TableName напрямую через рефлексию
+		// Setting the value of the TableName field using reflection
 		tableNameField := modelValue.FieldByName("TableName")
 		if tableNameField.IsValid() && tableNameField.CanSet() {
 			tableNameField.SetString(table.TableName)
 		}
-
+		// Reducing to the BaseCell interface
 		model := modelValue.Addr().Interface().(BaseCell)
 
 		if model == nil {
 			return nil, fmt.Errorf("model is nil")
 		}
 
-		// Заполнение модели данными из fields
+		// Filling the model with data from fields
 		for fieldName, value := range fields {
 			if fieldName == "Id" {
-				value = uint(value.(int32))
+				value = value.(int)
 			}
 			reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
 		}
@@ -77,7 +76,8 @@ func (table *BaseTable) newModel(fields map[string]interface{}) (BaseCell, error
 	return nil, fmt.Errorf("model not found in tableRegistry map")
 }
 
-func (table *BaseTable) getById(id uint) (interface{}, error) {
+// Function to get a data by id
+func (table *BaseTable) getById(id int) (interface{}, error) {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
 	rows, err := conn.Query(context.Background(), selectSQL, id)
 	if err != nil {

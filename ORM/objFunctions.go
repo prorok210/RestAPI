@@ -52,6 +52,7 @@ func InitDB() error {
 		return fmt.Errorf("database connect error: %v", InitDBError)
 	}
 
+	// checking tables for compliance with structures
 	err := CheckTables()
 	if err != nil {
 		return fmt.Errorf("error checking tables: %v", err)
@@ -67,22 +68,22 @@ func CreateTable(obj interface{}) error {
 
 	var tableName string
 
-	// Проверяем наличие поля
+	// Checking the presence of the field
 	field, found := data.FieldByName("TableName")
 	if found {
-		// Получаем значение поля
+		// Getting the field value
 		userValue := reflect.ValueOf(obj)
 		fieldValue := userValue.FieldByName("TableName")
 
 		if fieldValue.IsValid() {
 			tableName = fieldValue.String()
 
-			fmt.Printf("Поле '%s' найдено в структуре. Значение: %s\n", field.Name, tableName)
+			fmt.Printf("Field '%s' was found in the structure. Value: %s\n", field.Name, tableName)
 		} else {
-			return fmt.Errorf("поле '%s' найдено, но его значение недоступно.", field.Name)
+			return fmt.Errorf("field '%s' was found, but its value is not available.", field.Name)
 		}
 	} else {
-		return fmt.Errorf("Поле '%s' не найдено в структуре.\n", "TableName")
+		return fmt.Errorf("Field 'TableName' was not found in the structure.\n")
 	}
 
 	var exists bool
@@ -105,18 +106,21 @@ func CreateTable(obj interface{}) error {
 		if ormTag == "" {
 			return fmt.Errorf("field %s does not have a tag", field.Name)
 		} else if strings.Contains(ormTag, "ref") {
-			// Ищем индекс подстроки "ref"
+			// Looking for the index of the substring "ref"
 			start := strings.Index(ormTag, "ref")
 
+			// Getting the substring from the index to the end of the string
 			match := ormTag[start:]
-
+			// Removing the substring from the tag
 			ormTag = strings.Replace(ormTag, " "+match, "", -1)
-
+			// Add the field name and value from the orm tag with reference
 			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
 		} else {
+			// Add the field name and value from the orm tag with reference
 			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
 		}
 	}
+	// Remove the last comma and space
 	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
 	sqlQuery += ");"
 
@@ -134,11 +138,14 @@ func CreateTable(obj interface{}) error {
 // Function for creating a new table object based on obj.TableName
 func Create(obj interface{}) error {
 	fmt.Println("CREATE", obj)
-	values, columns := extractFields(obj)      // Getting the fields and their values
-	columns = columns[2:]                      // Removing a column "TableName" and Id
-	tableName, values := values[0], values[2:] // Getting the table name and delete it from the list of value
-
-	columnsStr := "(" + strings.Join(columns, ", ") + ")" // Create a SQL-string with column names
+	// Getting the fields and their values
+	values, columns := extractFields(obj)
+	// Removing a column "TableName" and Id
+	columns = columns[2:]
+	// Getting the table name and delete it from the list of value
+	tableName, values := values[0], values[2:]
+	// Create a SQL-string with column names
+	columnsStr := "(" + strings.Join(columns, ", ") + ")"
 
 	// Create a slice of placeholders
 	placeholders := make([]string, len(values))
@@ -161,13 +168,17 @@ func Create(obj interface{}) error {
 
 // Function for updating information in the database
 func Update(obj interface{}) error {
-	values, columns := extractFields(obj) // get all the fields of the structure and their values
+	// get all the fields of the structure and their values
+	values, columns := extractFields(obj)
 	fmt.Println(values, columns)
-	columns = columns[2:]                      // Removing a column "TableName" and "ID"
-	tableName, values := values[0], values[1:] // Getting the table name and delete it from the list of values
-
-	strID := fmt.Sprint(values[0]) // Getting the obj ID
-	values = values[1:]            // Removing the ID from the list of values
+	// Removing a column "TableName" and "ID"
+	columns = columns[2:]
+	// Getting the table name and delete it from the list of values
+	tableName, values := values[0], values[1:]
+	// Getting the obj ID
+	strID := fmt.Sprint(values[0])
+	// Removing the ID from the list of values
+	values = values[1:]
 
 	// Create a string with column names and values for SQL-query
 	updateData := ""
@@ -190,6 +201,7 @@ func Update(obj interface{}) error {
 	return nil
 }
 
+// The function takes a string and returns it with the 1st character in large case
 func capitalizeFirstLetter(s string) string {
 	if len(s) == 0 {
 		return s
@@ -199,7 +211,7 @@ func capitalizeFirstLetter(s string) string {
 	return string(runes)
 }
 
-// convertObject function
+// converts an object to a type from typeMap
 func convertObject(obj interface{}, tableName string) (interface{}, error) {
 	newType, ok := typeMap[tableName]
 	if !ok {

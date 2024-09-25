@@ -7,44 +7,43 @@ import (
 	"strings"
 )
 
-// Функция для проверки соответствия таблиц в БД и структур в коде
+// Function for checking the similarity of tables in database and structures
 func CheckTables() error {
-	// Проходим по каждой структуре модели
 	for tableName, modelType := range tableRegistry {
-		fmt.Printf("Проверка таблицы %s...\n", tableName)
+		fmt.Printf("Checking table %s...\n", tableName)
 
-		// Получаем текущую структуру таблицы из базы данных
+		// Getting the current table structure from the database
 		dbColumns, err := getTableColumns(tableName)
 
 		fmt.Println("dbColumns", dbColumns)
 		if err != nil {
-			return fmt.Errorf("ошибка получения столбцов таблицы %s: %v", tableName, err)
+			return fmt.Errorf("error getting table columns %s: %v", tableName, err)
 		}
 
-		// Сравниваем структуру с моделью
+		// Comparing the structure with the model
 		modelColumns, err := getModelColumns(modelType)
 		if err != nil {
-			return fmt.Errorf("ошибка получения столбцов модели %s: %v", modelType.Name(), err)
+			return fmt.Errorf("error getting model fields %s: %v", modelType.Name(), err)
 		}
 		fmt.Println("modelColumns", modelColumns)
 
-		// Сравнение столбцов
+		// Column comparison
 		if !compareColumns(dbColumns, modelColumns) {
-			fmt.Printf("Различие в структуре таблицы %s!\n", tableName)
+			fmt.Printf("Difference in table structure %s!\n", tableName)
 		} else {
-			fmt.Printf("Таблица %s соответствует модели.\n", tableName)
+			fmt.Printf("Table %s matches the model.\n", tableName)
 		}
 	}
 
 	return nil
 }
 
-// Получение списка столбцов таблицы из базы данных
+// Getting a list of table columns from a database
 func getTableColumns(tableName string) (map[string]string, error) {
 	query := fmt.Sprintf("SELECT column_name, data_type FROM information_schema.columns WHERE table_name='%s';", tableName)
 	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+		return nil, fmt.Errorf("request error: %v", err)
 	}
 	defer rows.Close()
 
@@ -54,7 +53,7 @@ func getTableColumns(tableName string) (map[string]string, error) {
 		var dataType string
 		err := rows.Scan(&columnName, &dataType)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка чтения строки: %v", err)
+			return nil, fmt.Errorf("line reading error: %v", err)
 		}
 		columns[columnName] = dataType
 	}
@@ -62,7 +61,7 @@ func getTableColumns(tableName string) (map[string]string, error) {
 	return columns, nil
 }
 
-// Получение списка полей из модели (структуры)
+// Getting a list of fields from a structure
 func getModelColumns(modelType reflect.Type) (map[string]string, error) {
 	columns := make(map[string]string)
 
@@ -71,36 +70,36 @@ func getModelColumns(modelType reflect.Type) (map[string]string, error) {
 
 		ormTag := field.Tag.Get("orm")
 		if ormTag != "" {
-			// Извлечение типа из ORM тега
+			// Extract type from ORM tag
 			ormTag = strings.Split(ormTag, " ")[0]
 
 			columns[strings.ToLower(field.Name)] = tagToSqlType[ormTag]
 		}
 	}
 	if len(columns) == 0 {
-		return nil, fmt.Errorf("не найдено полей в модели")
+		return nil, fmt.Errorf("no fields found in model")
 	}
 
 	return columns, nil
 }
 
-// Сравнение двух списков столбцов
+// Comparing two map of columns
 func compareColumns(dbColumns, modelColumns map[string]string) bool {
-	// Проверка наличия всех столбцов из модели в БД
+	// Checking the presence of all columns from the model in the database
 	for col, modelType := range modelColumns {
 		if dbType, exists := dbColumns[col]; !exists {
-			fmt.Printf("Столбец %s отсутствует в БД.\n", col)
+			fmt.Printf("Column %s is missing from the database.\n", col)
 			return false
 		} else if !strings.Contains(dbType, modelType) {
-			fmt.Printf("Несоответствие типа столбца %s: в БД %s, в модели %s.\n", col, dbType, modelType)
+			fmt.Printf("Column type mismatch %s: in database %s, in model %s.\n", col, dbType, modelType)
 			return false
 		}
 	}
 
-	// Проверка на лишние столбцы в БД
+	// Check for extra columns in the database
 	for col := range dbColumns {
 		if _, exists := modelColumns[col]; !exists {
-			fmt.Printf("Лишний столбец %s найден в БД.\n", col)
+			fmt.Printf("An extra column %s was found in the database.\n", col)
 			return false
 		}
 	}

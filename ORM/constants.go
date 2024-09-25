@@ -11,12 +11,13 @@ const CONNECTIONDATA string = "host=localhost user=postgres password=admin dbnam
 // Connection to the database
 var (
 	conn *pgx.Conn
-	// Маппинг типов для создания дочерних объектов
+	// mapp for create child objects
 	tableRegistry = map[string]reflect.Type{
 		"users":    reflect.TypeOf(User{TableName: "users"}),
 		"dialogs":  reflect.TypeOf(Dialog{TableName: "dialogs"}),
 		"messages": reflect.TypeOf(Message{TableName: "messages"}),
 	}
+
 	typeMap = map[string]reflect.Type{
 		"users":   reflect.TypeOf((*User)(nil)).Elem(),
 		"dialogs": reflect.TypeOf((*Dialog)(nil)).Elem(),
