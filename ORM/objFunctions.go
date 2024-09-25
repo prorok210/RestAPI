@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"unicode"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -86,6 +85,7 @@ func CreateTable(obj interface{}) error {
 		return fmt.Errorf("field 'TableName' was not found in the structure")
 	}
 
+	// Checking a table exists or not
 	var exists bool
 	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
 	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
@@ -107,6 +107,7 @@ func CreateTable(obj interface{}) error {
 			continue
 		}
 		ormTag := field.Tag.Get("orm")
+		ormTag = strings.Replace(ormTag, "_", " ", -1)
 		if ormTag == "" {
 			return fmt.Errorf("field %s does not have a tag", field.Name)
 		} else if strings.Contains(ormTag, "ref") {
@@ -205,16 +206,6 @@ func Update(obj interface{}) error {
 	return nil
 }
 
-// The function takes a string and returns it with the 1st character in large case
-func capitalizeFirstLetter(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	runes := []rune(s)
-	runes[0] = unicode.ToUpper(runes[0])
-	return string(runes)
-}
-
 // converts an object to a type from typeMap
 func convertObject(obj interface{}, tableName string) (interface{}, error) {
 	newType, ok := typeMap[tableName]
@@ -236,4 +227,16 @@ func convertObject(obj interface{}, tableName string) (interface{}, error) {
 	}
 
 	return obj, nil
+}
+
+func find_rule(tag string, rule string) string {
+	start := strings.Index(tag, rule)
+	end := start + strings.Index(tag[start:], " ")
+	fmt.Println("RULE", start, end, tag, rule, strings.Index(tag[start:], " "))
+	if start == -1 || end < start {
+		return ""
+	}
+	rule = strings.ToUpper(strings.Replace(rule, "_", " ", -1))
+	rule += strings.ToUpper(tag[start:end])
+	return rule
 }

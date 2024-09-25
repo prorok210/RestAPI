@@ -104,7 +104,7 @@ func (table *BaseTable) GetById(id int) (interface{}, error) {
 
 	// Итерируем по столбцам и значениям, записывая их в map
 	for i, fd := range fieldDescriptions {
-		columnName := capitalizeFirstLetter(string(fd.Name))
+		columnName := CapitalizeFirstLetter(string(fd.Name))
 		result[columnName] = values[i]
 	}
 	fmt.Println(result)

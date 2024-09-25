@@ -24,17 +24,17 @@ type TableMessages struct {
 
 type Message struct {
 	TableName string
-	Id        int    `orm:"serial primary key"`
-	UserId    int    `orm:"int ref users(id) on update cascade on delete cascade"`
-	Text      string `orm:"varchar not null"`
+	Id        int    `orm:"serial_primary_key"`
+	UserId    int    `orm:"int ref_users(id) on_update_cascade on_delete_cascade"`
+	Text      string `orm:"varchar not_null"`
 }
 
 // User structure
 type User struct {
 	TableName string
-	Id        int    `orm:"serial primary key"`
-	Name      string `orm:"varchar not null"`
-	Email     string `orm:"varchar not null"`
+	Id        int    `orm:"serial_primary_key"`
+	Name      string `orm:"varchar not_null"`
+	Email     string `orm:"varchar not_null"`
 }
 
 // Table of dialogs
@@ -45,7 +45,7 @@ type TableDialogs struct {
 // Dialog structure
 type Dialog struct {
 	TableName string
-	Id        int    `orm:"serial primary key"`
-	Owner     string `orm:"varchar not null"`
-	Opponent  string `orm:"varchar not null"`
+	Id        int    `orm:"serial_primary_key"`
+	Owner     string `orm:"varchar not_null"`
+	Opponent  string `orm:"varchar not_null"`
 }

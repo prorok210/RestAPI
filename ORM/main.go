@@ -31,6 +31,8 @@ func main() {
 	// }
 	// fmt.Println(user)
 	// messages := TableMessages{BaseTable{"messages"}}
-	CreateTable(Message{TableName: "messages"})
+	// CreateTable(User{TableName: "users"})
+	// CreateTable(Dialog{TableName: "dialogs"})
+	// CreateTable(Message{TableName: "messages"})
 
 }

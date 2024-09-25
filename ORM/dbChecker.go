@@ -17,24 +17,28 @@ func CheckTables() error {
 		// Getting the current table structure from the database
 		dbColumns, err := getTableColumns(tableName)
 
-		fmt.Println("dbColumns", dbColumns)
 		if err != nil {
 			return fmt.Errorf("error getting table columns %s: %v", tableName, err)
 		}
+		// fmt.Println("dbColumns", dbColumns)
 
 		// Comparing the structure with the model
 		modelColumns, err := getModelColumns(modelType)
 		if err != nil {
 			return fmt.Errorf("error getting model fields %s: %v", modelType.Name(), err)
 		}
-		fmt.Println("modelColumns", modelColumns)
+		// fmt.Println("modelColumns", modelColumns)
 
 		// Column comparison
-		// if !compareColumns(dbColumns, modelColumns) {
-		// 	fmt.Printf("Difference in table structure %s!\n", tableName)
-		// } else {
-		// 	fmt.Printf("Table %s matches the model.\n", tableName)
-		// }
+		ok, err := compareColumns(dbColumns, modelColumns)
+		if err != nil {
+			return fmt.Errorf("error comparing columns %s: %v", tableName, err)
+		}
+		if !ok {
+			fmt.Printf("Difference in table structure %s!\n", tableName)
+		} else {
+			fmt.Printf("Table %s matches the model\n", tableName)
+		}
 	}
 
 	return nil
@@ -91,7 +95,7 @@ func getTableColumns(tableName string) (map[string]map[string]string, error) {
 		}
 
 		columns[columnName.String] = columnDetails
-		fmt.Println("CD", columnDetails, columnName.String)
+		// fmt.Println("CD", columnDetails, columnName.String)
 	}
 
 	return columns, nil
@@ -118,24 +122,44 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 		column := columns[strings.ToLower(field.Name)]
 
 		ormTag := strings.ToLower(field.Tag.Get("orm"))
+		fmt.Println("ormTag", ormTag)
 		if ormTag != "" {
-			// Extract type from ORM tag
-			if strings.Contains(ormTag, "serial primary key") {
+			ormTagSlice := strings.Split(ormTag, " ")
+			value, ok := tagToSqlType[ormTagSlice[0]]
+			if !ok {
+				return nil, fmt.Errorf("unknown type %s. You can add it in tagToSqlType in constants.go", ormTagSlice[0])
+			} else {
+				column["data_type"] = value
+			}
+			if Contains(ormTagSlice, "serial_primary_key") {
 				column["constraint_type"] = "PRIMARY KEY"
 				column["is_identity"] = "true"
 				column["is_nullable"] = "NO"
-				ormTag = strings.Replace(ormTag, "serial primary key", "", -1)
 			}
-			if strings.Contains(ormTag, "ref") {
+			if Contains(ormTagSlice, "ref") {
 				column["constraint_type"] = "FOREIGN KEY"
 				column["is_identity"] = "true"
-				start := strings.Index(ormTag, "ref")
-				end := strings.Index(ormTag[start:], ")")
-				ormTag = strings.Replace(ormTag, ormTag[start:end+1], "", -1)
+				if Contains(ormTagSlice, "on_update") {
+					fmt.Println("on_update contains")
+					updateRule := find_rule(ormTag, "on_update")
+					column["update_rule"] = updateRule
+				} else {
+					fmt.Println("on_update NOOOO contains")
+				}
+				if Contains(ormTagSlice, "on_delete") {
+					fmt.Println("on_delete contains")
+					deleteRule := find_rule(ormTag, "on_delete")
+					column["update_rule"] = deleteRule
+				} else {
+					fmt.Println("on_delete NOOOOO scontains")
+				}
 			}
-			ormTag = strings.TrimSpace(ormTag)
-			ormTag := strings.Split(ormTag, " ")
-			column["data_type"] = ormTag[0]
+			if Contains(ormTagSlice, "not_null") {
+				column["is_nullable"] = "NO"
+			}
+			if Contains(ormTagSlice, "unique") {
+				column["constraint_type"] = "UNIQUE"
+			}
 
 		}
 	}
@@ -147,25 +171,26 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 }
 
 // Comparing two map of columns
-// func compareColumns(dbColumns, modelColumns map[string]map[string]string) bool {
-// 	// Checking the presence of all columns from the model in the database
-// 	for col, modelType := range modelColumns {
-// 		if dbType, exists := dbColumns[col]; !exists {
-// 			fmt.Printf("Column %s is missing from the database.\n", col)
-// 			return false
-// 		} else if !strings.Contains(dbType, modelType) {
-// 			fmt.Printf("Column type mismatch %s: in database %s, in model %s.\n", col, dbType, modelType)
-// 			return false
-// 		}
-// 	}
+func compareColumns(dbColumns, modelColumns map[string]map[string]string) (bool, error) {
+	// Checking the presence of all columns from the model in the database
+	for key, valueDb := range dbColumns {
+		if _, ok := modelColumns[key]; !ok {
+			return false, fmt.Errorf("column %s not found in model", key)
+		}
 
-// 	// Check for extra columns in the database
-// 	for col := range dbColumns {
-// 		if _, exists := modelColumns[col]; !exists {
-// 			fmt.Printf("An extra column %s was found in the database.\n", col)
-// 			return false
-// 		}
-// 	}
+		// Checking the presence of all columns from the database in the model
+		if _, ok := dbColumns[key]; !ok {
+			return false, fmt.Errorf("column %s not found in database", key)
+		}
 
-// 	return true
-// }
+		valueModel := modelColumns[key]
+		// Checking the similarity of the columns
+		for key, value := range valueDb {
+			if value != valueModel[key] {
+				return false, fmt.Errorf("column %s does not match the model, db: %s and model: %s", key, value, valueModel[key])
+			}
+		}
+	}
+
+	return true, nil
+}
