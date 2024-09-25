@@ -11,7 +11,9 @@ import (
 )
 
 func isAllowedHostMiddleware(clientAddr string) bool {
-	if !IS_ALLOWED_HOSTS {return true}
+	if !IS_ALLOWED_HOSTS {
+		return true
+	}
 
 	host, _, err := net.SplitHostPort(clientAddr)
 	if err != nil {
@@ -36,7 +38,9 @@ func isAllowedHostMiddleware(clientAddr string) bool {
 }
 
 func reqMiddleware(request *HttpRequest, clientConn Conn) error {
-	if !REQ_MIDDLEWARE {return nil}
+	if !REQ_MIDDLEWARE {
+		return nil
+	}
 	methodFlag := false
 	for _, allowedMethod := range ALLOWED_METHODS {
 		if request.Method == allowedMethod {
@@ -96,7 +100,9 @@ func reqMiddleware(request *HttpRequest, clientConn Conn) error {
 }
 
 func keepAliveMiddleware(request *HttpRequest, clientConn Conn) error {
-	if !KEEP_ALIVE {return nil}
+	if !KEEP_ALIVE {
+		return nil
+	}
 	if request.Headers == nil {
 		return errors.New("Connection: close")
 	}

@@ -3,14 +3,16 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -22,16 +24,20 @@ type Conn interface {
 }
 
 type Server struct {
-	servAddr  string
-	listener  net.Listener
-	handleApp RequestHandler
-	Mutex     *sync.Mutex 
+	httpAddr  		string
+	httpsAddr 		string
+	httpListener  	net.Listener
+	httpsListener	net.Listener
+	handleApp 		RequestHandler
+	certFile  		string
+	keyFile   		string
 }
 
 func CreateServer(mainApplication RequestHandler) (*Server, error) {
 	regex := regexp.MustCompile(`^([a-zA-Z0-9.-]+):([0-9]{1,5})$`)
-	addr := HOST + ":" + strconv.Itoa(PORT)
-	if !regex.MatchString(addr) {
+	httpAddr := HOST + ":" + strconv.Itoa(HTTP_PORT)
+	httpsAddr := HOST + ":" + strconv.Itoa(HTTPS_PORT)
+	if !regex.MatchString(httpAddr) || !regex.MatchString(httpsAddr) {
 		log.Println("Invalid address format")
 		return nil, errors.New("Invalid address format")
 	}
@@ -41,63 +47,110 @@ func CreateServer(mainApplication RequestHandler) (*Server, error) {
 	}
 
 	server := &Server{
-		servAddr:  addr,
+		httpAddr:  httpAddr,
+		httpsAddr: httpsAddr,
 		handleApp: mainApplication,
-		Mutex:    &sync.Mutex{},
+		certFile: CERT_FILE,
+		keyFile:  KEY_FILE,
 	}
 	return server, nil
 }
 
 func (s *Server) Start() error {
+	if _, err := os.Stat(s.certFile); os.IsNotExist(err) {
+        return fmt.Errorf("certificate file not found: %s", s.certFile)
+    }
+    if _, err := os.Stat(s.keyFile); os.IsNotExist(err) {
+        return fmt.Errorf("key file not found: %s", s.keyFile)
+    }
+
 	log.Println("Starting server ...")
 	if s == nil {
 		log.Println("Server is not created")
 		return errors.New("Server is not created")
 	}
 
-	if s.servAddr == "" || s.handleApp == nil {
+	if s.httpAddr == "" || s.handleApp == nil {
 		log.Println("Server address or handle func is not set")
 		return errors.New("Server address or handle func is not set")
 	}
 
-	listener, er := net.Listen("tcp", s.servAddr)
+	listener, er := net.Listen("tcp", s.httpAddr)
 	if er != nil {
 		log.Println("Error starting server", er)
 		return er
 	}
-	s.listener = listener
+	s.httpListener = listener
+	go s.ListenHTTP()
 
-	log.Println("Server started successfully on ", s.servAddr)
+	log.Println("Http server started successfully on ", s.httpAddr)
 
-	go s.Listen()
+	cert, err := tls.LoadX509KeyPair(s.certFile, s.keyFile)
+	if err != nil {
+		log.Printf("Error loading SSL certificates: %v", err)
+		return err
+	}
+
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
+	httpsListener, err := tls.Listen("tcp", s.httpsAddr, config)
+	if err != nil {
+		log.Printf("Error starting HTTPS server: %v", err)
+		return err
+	}
+	s.httpsListener = httpsListener
+	go s.ListenHTTPS()
+
+	log.Println("Https server started successfully on ", s.httpsAddr)
 
 	return nil
 }
 
-func (s *Server) Stop() {
-	if s == nil {
-		log.Println("Server is not created")
-		return
-	}
-
-	if s.listener == nil {
-		log.Println("Server is not started")
-		return
-	}
-
-	log.Println("Stopping server ...")
-	s.listener.Close()
-}
-
-func (s *Server) Listen() {
-	log.Println("Listening for incoming connections")
-	defer s.listener.Close()
-	defer log.Println("Server stopped")
+func (s *Server) ListenHTTP() {
+	defer s.httpListener.Close()
+	defer log.Println("Http server stopped")
 
 	for {
-		clientConn, er := s.listener.Accept()
+		clientConn, er := s.httpListener.Accept()
 		if er != nil {
 			log.Println("Error accepting connection", er)
+			continue
+		}
+
+		go func (clientConn Conn) {
+			defer clientConn.Close()
+			defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
+
+			reader := bufio.NewReader(clientConn)
+			reqLine, _, err := reader.ReadLine()
+			if err != nil {
+				log.Println("Error reading HTTP request: ", err)
+				return
+			}
+
+			parts := strings.Split(string(reqLine), " ")
+			if len(parts) < 2 {
+				log.Println("Invalid HTTP request")
+				return
+			}
+
+			path := parts[1]
+			httpsHost := strings.Split(s.httpsAddr, ":")[0]
+			httpsURL := fmt.Sprintf("https://%s%s", httpsHost, path)
+
+			response := fmt.Sprintf("HTTP/1.1 301 Moved Permanently\r\nLocation: %s\r\nConnection: close\r\n\r\n", httpsURL)
+			clientConn.Write([]byte(response))
+		}(clientConn)
+	}
+}
+
+func (s *Server) ListenHTTPS() {
+	defer s.httpsListener.Close()
+	defer log.Println("Https server stopped")
+
+	for {
+		clientConn, err := s.httpsListener.Accept()
+		if err != nil {
+			log.Println("Error accepting HTTPS connection", err)
 			continue
 		}
 
@@ -111,10 +164,21 @@ func (s *Server) Listen() {
 	}
 }
 
-
 func (s *Server) ConnProcessing(clientConn Conn) {
 	defer clientConn.Close()
 	defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
+
+	tlsConn, ok := clientConn.(*tls.Conn)
+	if !ok {
+		log.Println("Error type assertion")
+		return
+	}
+
+	er := tlsConn.Handshake()
+	if er != nil {
+		log.Println("Error TLS handshake", er)
+		return
+	}
 
 	for {
 		clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
@@ -127,7 +191,7 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 				return nil, err
 			}
 			startLine = strings.TrimSpace(startLine)
-		
+
 			headers := make([]byte, 0, 4096)
 			for {
 				line, err := reader.ReadBytes('\n')
@@ -136,7 +200,7 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 					break
 				}
 			}
-		
+
 			contentLength := 0
 			headerLines := bytes.Split(headers, []byte("\r\n"))
 			for _, line := range headerLines {
@@ -154,10 +218,10 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 			if err != nil {
 				return nil, err
 			}
-		
+
 			fullRequest := append([]byte(startLine+"\r\n"), headers...)
 			fullRequest = append(fullRequest, body...)
-		
+
 			return fullRequest, nil
 		}(clientConn)
 
@@ -211,4 +275,20 @@ func (s *Server) ConnProcessing(clientConn Conn) {
 			return
 		}
 	}
+}
+
+func (s *Server) Stop() {
+	if s == nil {
+		log.Println("Server is not created")
+		return
+	}
+
+	if s.httpListener == nil || s.httpsListener == nil {
+		log.Println("Server is not started")
+		return
+	}
+
+	log.Println("Stopping server ...")
+	s.httpListener.Close()
+	s.httpsListener.Close()
 }

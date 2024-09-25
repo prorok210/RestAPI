@@ -82,7 +82,7 @@ func TestSetHeader(t *testing.T) {
 
 func TestParseFormData(t *testing.T) {
 	boundary := "--------------------------477699956037780681100607"
-	type FileInfo struct{
+	type FileInfo struct {
 		FileName string
 		FileData []byte
 	}
@@ -236,23 +236,20 @@ func TestParseFormData(t *testing.T) {
 					t.Errorf("No files found for key %s", key)
 					continue
 				}
-			
-				// Проверяем, что количество файлов совпадает
+
 				if len(actualFiles) != len(expectedFiles) {
 					t.Errorf("File %s: expected %d files, got %d", key, len(expectedFiles), len(actualFiles))
 					continue
 				}
-			
-				// Сравниваем каждый файл в массиве
+
 				for i := range expectedFiles {
 					expectedFile := expectedFiles[i]
 					file := actualFiles[i]
-			
-					// Проверяем имя файла
+
 					if file.FileName != expectedFile.FileName {
 						t.Errorf("File %s [%d]: expected name %s, got %s", key, i, expectedFile.FileName, file.FileName)
 					}
-			
+
 					// Проверяем содержимое файла
 					if !bytes.Equal(file.FileData, expectedFile.FileData) {
 						t.Errorf("File %s [%d]: content mismatch", key, i)
@@ -262,7 +259,6 @@ func TestParseFormData(t *testing.T) {
 		})
 	}
 }
-
 
 func TestSerialize(t *testing.T) {
 	testCases := []struct {
@@ -351,12 +347,22 @@ func TestStartServer(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		server, _ := CreateServer(testCase.handleApp)
-		err := server.Start()
-		if err != nil && !testCase.expectedError {
-			t.Errorf("Unexpected error in %d test case: %s", i, err)
+		server, er := CreateServer(testCase.handleApp)
+		if er != nil && !testCase.expectedError {
+			t.Errorf("Error creating server in %d test case: %s", i, er)
+		} else if er == nil && testCase.expectedError {
+			t.Errorf("Expected error in %d test case but got none", i)
 		}
-		server.Stop()
+
+		if server != nil {
+			err := server.Start()
+			if err != nil && !testCase.expectedError {
+				t.Errorf("Unexpected error in %d test case: %s", i, err)
+			}
+			server.Stop()
+		} else if !testCase.expectedError {
+			t.Errorf("Server was not created in %d test case, but expected no error", i)
+		}
 	}
 }
 
@@ -475,7 +481,7 @@ func TestReqMiddleware(t *testing.T) {
 				t.Errorf("Test case %d: Expected error %s, but got %s", i, testCase.expectedError, err)
 			}
 		}
-		
+
 		if err := connMock.Close(); err != nil {
 			t.Errorf("Test case %d: Failed to close connection: %s", i, err)
 		}

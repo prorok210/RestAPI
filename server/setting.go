@@ -14,16 +14,19 @@ import (
 
 const (
 	// Настройки сервера
-	HOST        		string			= "0.0.0.0"
-	PORT         		int          	= 8080
-	CONN_TIMEOUT 		time.Duration	= 20
-	WRITE_TIMEOUT 		time.Duration	= 20
-	BUFSIZE      		int           	= 5 * 1024 * 1024
-	IMAGES_DIR   		string        	= "/media/images"
+	HOST          	string        	= "0.0.0.0"
+	HTTP_PORT     	int           	= 8080
+	HTTPS_PORT    	int           	= 8443
+	CERT_FILE 		string			= "/home/user/etc/ssl/certs/dev.crt"
+	KEY_FILE 		string			= "/home/user/etc/ssl/private/dev.key"
+	CONN_TIMEOUT  	time.Duration 	= 20
+	WRITE_TIMEOUT 	time.Duration 	= 20
+	BUFSIZE       	int           	= 5 * 1024 * 1024
+	IMAGES_DIR    	string        	= "/media/images"
 	// Настройки мидлваров
-	IS_ALLOWED_HOSTS 	bool			= true
-	REQ_MIDDLEWARE	 	bool			= true
-	KEEP_ALIVE   		bool          	= true
+	IS_ALLOWED_HOSTS bool = true
+	REQ_MIDDLEWARE   bool = true
+	KEEP_ALIVE       bool = true
 )
 
 var ALLOWED_HOSTS = []string{
@@ -34,6 +37,7 @@ var ALLOWED_HOSTS = []string{
 }
 
 var ALLOWED_METHODS = []string{
+	"OPTIONS",
 	"GET",
 	"POST",
 	"PUT",

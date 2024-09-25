@@ -23,8 +23,8 @@ type Tokens struct {
 }
 
 type Image struct {
-	UserID		string
-	ImageURL	string
+	UserID   string
+	ImageURL string
 }
 
 var userStore = make(map[string]*User) // Удалить позже

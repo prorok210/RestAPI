@@ -83,18 +83,17 @@ func VerifyUserHandler(request server.HttpRequest) server.HttpResponse {
 	}
 }
 
-
 func CreateUserFormdataHandler(request server.HttpRequest) server.HttpResponse {
 	if request.Method != "POST" {
 		return server.HTTP405
 	}
 
 	user := new(User)
-	
-	user.Mobile		= request.FormData.Fields["mobile"]
-	user.Name 		= request.FormData.Fields["name"]
-	user.Surname 	= request.FormData.Fields["surname"]
-	user.Email		= request.FormData.Fields["email"]
+
+	user.Mobile = request.FormData.Fields["mobile"]
+	user.Name = request.FormData.Fields["name"]
+	user.Surname = request.FormData.Fields["surname"]
+	user.Email = request.FormData.Fields["email"]
 
 	age, err := strconv.Atoi(request.FormData.Fields["age"])
 	if err != nil {
@@ -104,13 +103,13 @@ func CreateUserFormdataHandler(request server.HttpRequest) server.HttpResponse {
 	user.Age = age
 
 	saveFile := func(filename string, fileData []byte) error {
-		currentDir , er := os.Getwd()
+		currentDir, er := os.Getwd()
 		filePath := currentDir + server.IMAGES_DIR + "/" + filename
 		if er != nil {
 			return er
 		}
 		if _, err := os.Stat(currentDir + server.IMAGES_DIR); os.IsNotExist(err) {
-			err := os.MkdirAll(currentDir + server.IMAGES_DIR, 0755)
+			err := os.MkdirAll(currentDir+server.IMAGES_DIR, 0755)
 			if err != nil {
 				return err
 			}
@@ -147,13 +146,12 @@ func CreateUserFormdataHandler(request server.HttpRequest) server.HttpResponse {
 	return response
 }
 
-
 func ImageHandler(request server.HttpRequest) server.HttpResponse {
 	if request.Method != "GET" {
 		return server.HTTP405
 	}
 
-	currentDir , er := os.Getwd()
+	currentDir, er := os.Getwd()
 	if er != nil {
 		fmt.Println("Error getting current directory:", er)
 		return server.HTTP500

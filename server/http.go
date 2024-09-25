@@ -15,21 +15,21 @@ import (
 Структуры для работы с HTTP-запросами и ответами
 */
 type HttpRequest struct {
-	Method  	string
-	Url     	string
-	Query   	map[string]string
-	Version 	string
-	Headers 	map[string]string
-	Body    	string
-	FormData 	*FormData
+	Method   string
+	Url      string
+	Query    map[string]string
+	Version  string
+	Headers  map[string]string
+	Body     string
+	FormData *FormData
 }
 
 type FormData struct {
-	Fields	map[string]string
-	Files  	map[string][]struct{
-				FileName string
-				FileData []byte
-			}
+	Fields map[string]string
+	Files  map[string][]struct {
+		FileName string
+		FileData []byte
+	}
 }
 
 type HttpResponse struct {
@@ -146,7 +146,7 @@ func (resp *HttpResponse) SetHeader(key string, value string) {
 func (req *HttpRequest) ParseFormData() error {
 	req.FormData = &FormData{
 		Fields: make(map[string]string),
-		Files:  make(map[string][]struct{
+		Files: make(map[string][]struct {
 			FileName string
 			FileData []byte
 		}),
@@ -205,8 +205,6 @@ func (req *HttpRequest) ParseFormData() error {
 	return nil
 }
 
-
-
 func (resp *HttpResponse) Serialize(data interface{}) error {
 	if data == nil {
 		return errors.New("Data is nil")
@@ -219,8 +217,6 @@ func (resp *HttpResponse) Serialize(data interface{}) error {
 	resp.Body = string(jsonData)
 	return nil
 }
-
-
 
 /*
 Стандартные HTTP-ответы
