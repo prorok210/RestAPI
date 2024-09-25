@@ -22,7 +22,10 @@ func CheckTables() error {
 		}
 
 		// Сравниваем структуру с моделью
-		modelColumns := getModelColumns(modelType)
+		modelColumns, err := getModelColumns(modelType)
+		if err != nil {
+			return fmt.Errorf("ошибка получения столбцов модели %s: %v", modelType.Name(), err)
+		}
 		fmt.Println("modelColumns", modelColumns)
 
 		// Сравнение столбцов
@@ -60,7 +63,7 @@ func getTableColumns(tableName string) (map[string]string, error) {
 }
 
 // Получение списка полей из модели (структуры)
-func getModelColumns(modelType reflect.Type) map[string]string {
+func getModelColumns(modelType reflect.Type) (map[string]string, error) {
 	columns := make(map[string]string)
 
 	for i := 0; i < modelType.NumField(); i++ {
@@ -74,8 +77,11 @@ func getModelColumns(modelType reflect.Type) map[string]string {
 			columns[strings.ToLower(field.Name)] = tagToSqlType[ormTag]
 		}
 	}
+	if len(columns) == 0 {
+		return nil, fmt.Errorf("не найдено полей в модели")
+	}
 
-	return columns
+	return columns, nil
 }
 
 // Сравнение двух списков столбцов

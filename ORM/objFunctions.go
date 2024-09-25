@@ -59,33 +59,6 @@ func InitDB() error {
 
 	fmt.Println("Successfully connected to the database.")
 
-	creatingTables := []string{}
-
-	createTableSQL1 := `
-	CREATE TABLE IF NOT EXISTS users (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(50),
-		email VARCHAR(50)
-	);`
-
-	createTableSQL2 := `
-	CREATE TABLE IF NOT EXISTS dialogs (
-		id SERIAL PRIMARY KEY,
-		owner VARCHAR(50),
-		opponent VARCHAR(50)
-	);`
-
-	creatingTables = append(creatingTables, createTableSQL1, createTableSQL2)
-	// Execute a table creation request
-	for _, createTableSQL := range creatingTables {
-		_, err := conn.Exec(context.Background(), createTableSQL)
-		if err != nil {
-			return fmt.Errorf("error creating table: %v", err)
-		} else {
-			fmt.Println("Table created successfully or already exists.")
-		}
-	}
-
 	return nil
 }
 
@@ -110,6 +83,15 @@ func CreateTable(obj interface{}) error {
 		}
 	} else {
 		return fmt.Errorf("Поле '%s' не найдено в структуре.\n", "TableName")
+	}
+
+	var exists bool
+	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
+	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
+
+	if exists {
+		fmt.Println("Table already exists.")
+		return nil
 	}
 
 	sqlQuery := "CREATE TABLE IF NOT EXISTS " + tableName + " ("
@@ -140,11 +122,11 @@ func CreateTable(obj interface{}) error {
 
 	fmt.Println(sqlQuery)
 
-	_, err := conn.Exec(context.Background(), sqlQuery)
+	_, err = conn.Exec(context.Background(), sqlQuery)
 	if err != nil {
 		return fmt.Errorf("error creating table:", err)
 	} else {
-		fmt.Println("Table created successfully or already exists.")
+		fmt.Println("Table created successfully")
 	}
 	return nil
 }

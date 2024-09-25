@@ -31,6 +31,6 @@ func main() {
 	// }
 	// fmt.Println(user)
 	// messages := TableMessages{BaseTable{"messages"}}
-	CreateTable(Message{TableName: "messages"})
+	CreateTable(Message{TableName: "messagess"})
 
 }

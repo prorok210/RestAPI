@@ -45,7 +45,7 @@ type TableDialogs struct {
 // Dialog structure
 type Dialog struct {
 	TableName string
-	Id        int
-	Owner     string
-	Opponent  string
+	Id        int    `orm:"serial primary key"`
+	Owner     string `orm:"varchar not null"`
+	Opponent  string `orm:"varchar not null"`
 }

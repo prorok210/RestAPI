@@ -13,9 +13,9 @@ var (
 	conn *pgx.Conn
 	// Маппинг типов для создания дочерних объектов
 	tableRegistry = map[string]reflect.Type{
-		"users":   reflect.TypeOf(User{TableName: "users"}),
-		"dialogs": reflect.TypeOf(Dialog{TableName: "dialogs"}),
-		"usrees":  reflect.TypeOf(User{TableName: "usrees"}),
+		"users":    reflect.TypeOf(User{TableName: "users"}),
+		"dialogs":  reflect.TypeOf(Dialog{TableName: "dialogs"}),
+		"messages": reflect.TypeOf(Message{TableName: "messages"}),
 	}
 	typeMap = map[string]reflect.Type{
 		"users":   reflect.TypeOf((*User)(nil)).Elem(),
