@@ -25,7 +25,7 @@ type TableMessages struct {
 type Message struct {
 	TableName string
 	Id        int    `orm:"serial primary key"`
-	UserId    int    `orm:"int ref users(id)"`
+	UserId    int    `orm:"int ref users(id) on update cascade on delete cascade"`
 	Text      string `orm:"varchar not null"`
 }
 

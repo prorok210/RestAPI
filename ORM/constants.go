@@ -23,10 +23,11 @@ var (
 		"dialogs": reflect.TypeOf((*Dialog)(nil)).Elem(),
 	}
 	tagToSqlType = map[string]string{
-		"varchar": "character varying",
-		"serial":  "integer",
-		"int":     "integer",
-		"uint":    "integer",
-		"bool":    "boolean",
+		"varchar":  "character varying",
+		"serial":   "integer",
+		"int":      "integer",
+		"uint":     "integer",
+		"bool":     "boolean",
+		"not null": "NO",
 	}
 )
