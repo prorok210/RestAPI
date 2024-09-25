@@ -80,15 +80,19 @@ func CreateTable(obj interface{}) error {
 
 			fmt.Printf("Field '%s' was found in the structure. Value: %s\n", field.Name, tableName)
 		} else {
-			return fmt.Errorf("field '%s' was found, but its value is not available.", field.Name)
+			return fmt.Errorf("field '%s' was found, but its value is not available", field.Name)
 		}
 	} else {
-		return fmt.Errorf("Field 'TableName' was not found in the structure.\n")
+		return fmt.Errorf("field 'TableName' was not found in the structure")
 	}
 
 	var exists bool
 	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
 	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
+
+	if err != nil {
+		return fmt.Errorf("error checking table existence: %v", err)
+	}
 
 	if exists {
 		fmt.Println("Table already exists.")
@@ -128,7 +132,7 @@ func CreateTable(obj interface{}) error {
 
 	_, err = conn.Exec(context.Background(), sqlQuery)
 	if err != nil {
-		return fmt.Errorf("error creating table:", err)
+		return fmt.Errorf("error creating table %s", err)
 	} else {
 		fmt.Println("Table created successfully")
 	}

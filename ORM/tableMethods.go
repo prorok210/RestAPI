@@ -77,7 +77,7 @@ func (table *BaseTable) newModel(fields map[string]interface{}) (BaseCell, error
 }
 
 // Function to get a data by id
-func (table *BaseTable) getById(id int) (interface{}, error) {
+func (table *BaseTable) GetById(id int) (interface{}, error) {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
 	rows, err := conn.Query(context.Background(), selectSQL, id)
 	if err != nil {

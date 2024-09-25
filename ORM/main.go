@@ -1,10 +1,10 @@
 package main
 
 /*	1. Create new table Model in file Models.go and a new model with objects of this table
- 	2. Add new record in tableRegistry in file constants.go
+ 	2. Add new record in tableRegistry and typeMap in file constants.go
 	3. add constructor of new model in file constructors.go
 	4. in the start of file objFunctions create a ToFields func
-	5. Creating table for func "CreateTable(objOfTable{TableName: "tablename"})" in file db.go
+	5. Creating table for func "CreateTable(objOfTable{TableName: "tablename"})"
 	6. All structure fields starting with a capital letter, all other letters are small
 */
 
