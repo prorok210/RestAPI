@@ -7,6 +7,10 @@ import (
 	"reflect"
 )
 
+type BaseTable struct {
+	db.BaseTable
+}
+
 // Function to get all values ​​from the database
 func (table *BaseTable) GetAll() error {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s;`, table.TableName)

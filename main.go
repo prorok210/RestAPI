@@ -3,6 +3,7 @@ package main
 import (
 	"RestAPI/app"
 	"RestAPI/core"
+	"RestAPI/db"
 	"RestAPI/orm"
 	"log"
 )
@@ -32,6 +33,9 @@ func main() {
 		log.Println("Error starting server", er)
 		return
 	}
+
+	users := db.TableUsers{BaseTable{TableName: "users"}}
+	users.GetAll()
 
 	select {}
 }

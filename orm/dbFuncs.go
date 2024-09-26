@@ -285,8 +285,12 @@ func compareColumns(dbColumns, modelColumns map[string]map[string]string) (bool,
 		valueModel := modelColumns[key]
 		// Checking the similarity of the columns
 		for key, value := range valueDb {
+			if key == "update_rule" || key == "delete_rule" {
+				if value == "NO ACTION" && valueModel[key] == "" {
+					continue
+				}
+			}
 			if value != valueModel[key] {
-				fmt.Println("FIELDS", key, value, valueModel[key])
 				return false, fmt.Errorf("column %s does not match the model, db: %s and model: %s", key, value, valueModel[key])
 			}
 		}
