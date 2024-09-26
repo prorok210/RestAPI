@@ -1,9 +1,12 @@
 package orm
 
 import (
+	"RestAPI/core"
+	"RestAPI/db"
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -12,7 +15,7 @@ import (
 
 func InitDB() error {
 	var InitDBError error
-	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
+	conn, InitDBError = pgx.Connect(context.Background(), core.CONNECTIONDATA)
 	if InitDBError != nil {
 		return fmt.Errorf("database connect error: %v", InitDBError)
 	}
@@ -23,7 +26,7 @@ func InitDB() error {
 		return fmt.Errorf("error checking tables: %v", err)
 	}
 
-	fmt.Println("Successfully connected to the database.")
+	log.Println("Successfully connected to the database.")
 
 	return nil
 }
@@ -108,7 +111,7 @@ func CreateTable(obj interface{}) error {
 
 // Function for checking the similarity of tables in database and structures
 func CheckTables() error {
-	for tableName, modelType := range tableRegistry {
+	for tableName, modelType := range db.TableRegistry {
 		fmt.Printf("Checking table %s...\n", tableName)
 		fmt.Println("modelType", modelType)
 
@@ -122,6 +125,7 @@ func CheckTables() error {
 
 		// Comparing the structure with the model
 		modelColumns, err := getModelColumns(modelType)
+
 		if err != nil {
 			return fmt.Errorf("error getting model fields %s: %v", modelType.Name(), err)
 		}

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"RestAPI/server"
+	"RestAPI/core"
 	"bytes"
 	"errors"
 	"fmt"
@@ -27,7 +27,7 @@ func (u *User) SendSMS(message string) error {
 
 	url := "https://api.exolve.ru/messaging/v1/SendSMS"
 
-	smsJson := fmt.Sprintf(`{"number": "%s", "destination": "%s", "text": "%s"}`, server.MTS_API_NUMBER, u.Mobile, message)
+	smsJson := fmt.Sprintf(`{"number": "%s", "destination": "%s", "text": "%s"}`, core.MTS_API_NUMBER, u.Mobile, message)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(smsJson)))
 	if err != nil {
@@ -36,7 +36,7 @@ func (u *User) SendSMS(message string) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+server.MTS_API_KEY)
+	req.Header.Set("Authorization", "Bearer "+core.MTS_API_KEY)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

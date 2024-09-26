@@ -1,11 +1,11 @@
 package app
 
 import (
-	"RestAPI/server"
+	"RestAPI/core"
 	"RestAPI/user"
 )
 
-type HandlerFunc func(server.HttpRequest) server.HttpResponse
+type HandlerFunc func(core.HttpRequest) core.HttpResponse
 
 var viewsList = make(map[string]HandlerFunc)
 

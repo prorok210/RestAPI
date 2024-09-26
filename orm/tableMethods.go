@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"RestAPI/db"
 	"context"
 	"fmt"
 	"reflect"
@@ -47,7 +48,7 @@ func (table *BaseTable) GetAll() error {
 
 // Fabric function to create objects based on TableName
 func (table *BaseTable) newModel(fields map[string]interface{}) (BaseCell, error) {
-	if modelType, ok := tableRegistry[table.TableName]; ok {
+	if modelType, ok := db.TableRegistry[table.TableName]; ok {
 		// Creating a new instance of the desired type
 		modelValue := reflect.New(modelType).Elem()
 

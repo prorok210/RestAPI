@@ -1,7 +1,7 @@
 package user
 
 import (
-	"RestAPI/server"
+	"RestAPI/core"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -28,12 +28,12 @@ func GenerateAccessToken(mobile string, isActive bool) (string, error) {
 	claims := jwt.MapClaims{
 		"mobile":     mobile,
 		"isActive":   isActive,
-		"exp":        time.Now().Add(server.JWT_ACCESS_EXPIRATION_TIME).Unix(),
+		"exp":        time.Now().Add(core.JWT_ACCESS_EXPIRATION_TIME).Unix(),
 		"token_type": "access",
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(server.JWT_ACCESS_SECRET_KEY))
+	return token.SignedString([]byte(core.JWT_ACCESS_SECRET_KEY))
 }
 
 func GenerateRefreshToken(mobile string, isActive bool) (string, error) {
@@ -43,22 +43,22 @@ func GenerateRefreshToken(mobile string, isActive bool) (string, error) {
 	claims := jwt.MapClaims{
 		"mobile":     mobile,
 		"isActive":   isActive,
-		"exp":        time.Now().Add(server.JWT_REFRESH_EXPIRATION_TIME).Unix(),
+		"exp":        time.Now().Add(core.JWT_REFRESH_EXPIRATION_TIME).Unix(),
 		"token_type": "refresh",
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(server.JWT_REFRESH_SECRET_KEY))
+	return token.SignedString([]byte(core.JWT_REFRESH_SECRET_KEY))
 }
 
 func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(server.JWT_ACCESS_SECRET_KEY), nil
+		return []byte(core.JWT_ACCESS_SECRET_KEY), nil
 	})
 
 	if err != nil {
 		token, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte(server.JWT_REFRESH_SECRET_KEY), nil
+			return []byte(core.JWT_REFRESH_SECRET_KEY), nil
 		})
 		if err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 
 func RefreshTokens(refreshTokenString string) (string, string, error) {
 	token, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(server.JWT_REFRESH_SECRET_KEY), nil
+		return []byte(core.JWT_REFRESH_SECRET_KEY), nil
 	})
 
 	if err != nil || !token.Valid {

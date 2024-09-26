@@ -1,52 +1,18 @@
 package orm
 
 import (
+	"RestAPI/db"
 	"context"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
-func (user *User) ToFields() ([]interface{}, []string) {
-	return extractFields(user)
-}
-
-func (dialog *Dialog) ToFields() ([]interface{}, []string) {
-	return extractFields(dialog)
-}
-
-func (message *Message) ToFields() ([]interface{}, []string) {
-	return extractFields(message)
-}
-
-// Generic function to extract fields
-func extractFields(obj interface{}) ([]interface{}, []string) {
-	// Getting the value and type of the object
-	val := reflect.ValueOf(obj).Elem()
-	typ := reflect.TypeOf(obj).Elem()
-
-	var values []interface{}
-	var columns []string
-
-	// We go to fields of the structure
-	for i := 0; i < val.NumField(); i++ {
-		field := typ.Field(i)
-		fieldName := field.Name
-
-		// Adding a field name to the list of columns
-		columns = append(columns, fieldName)
-
-		// Adding a field value to the list of values
-		values = append(values, val.Field(i).Interface())
-	}
-	return values, columns
-}
-
 // Function for creating a new table object based on obj.TableName
 func Create(obj interface{}) error {
 	fmt.Println("CREATE", obj)
 	// Getting the fields and their values
-	values, columns := extractFields(obj)
+	values, columns := db.ExtractFields(obj)
 	// Removing a column "TableName" and Id
 	columns = columns[2:]
 	// Getting the table name and delete it from the list of value
@@ -76,7 +42,7 @@ func Create(obj interface{}) error {
 // Function for updating information in the database
 func Update(obj interface{}) error {
 	// get all the fields of the structure and their values
-	values, columns := extractFields(obj)
+	values, columns := db.ExtractFields(obj)
 	fmt.Println(values, columns)
 	// Removing a column "TableName" and "ID"
 	columns = columns[2:]
@@ -110,7 +76,7 @@ func Update(obj interface{}) error {
 
 // converts an object to a type from typeMap
 func convertObject(obj interface{}, tableName string) (interface{}, error) {
-	newType, ok := typeMap[tableName]
+	newType, ok := db.TypeMap[tableName]
 	if !ok {
 		return nil, fmt.Errorf("type %s not found in typeMap", tableName)
 	}

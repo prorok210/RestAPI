@@ -1,7 +1,7 @@
 package user
 
 import (
-	"RestAPI/server"
+	"RestAPI/core"
 	"errors"
 	"os"
 	"testing"
@@ -40,16 +40,15 @@ func TestSendSms(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error env load %v", err)
 	}
-	server.MTS_API_KEY = os.Getenv("MTS_API_KEY")
-	server.MTS_API_NUMBER = os.Getenv("MTS_API_NUMBER")
-	if server.MTS_API_KEY == "" || server.MTS_API_NUMBER == "" {
+	core.MTS_API_KEY = os.Getenv("MTS_API_KEY")
+	core.MTS_API_NUMBER = os.Getenv("MTS_API_NUMBER")
+	if core.MTS_API_KEY == "" || core.MTS_API_NUMBER == "" {
 		t.Errorf("Error env load %v", err)
 	}
 
 	for _, tc := range testCases {
-		u := &User{
-			Mobile: tc.Mobile,
-		}
+		u := new(User)
+		u.Mobile = tc.Mobile
 		err := u.SendSMS(tc.message)
 		if err != nil {
 			if tc.err == nil {
@@ -67,10 +66,10 @@ func TestSendSms(t *testing.T) {
 Test jwtOuth.go
 */
 func initSecrets() {
-	server.JWT_ACCESS_SECRET_KEY = "testAccessSecretKey"
-	server.JWT_REFRESH_SECRET_KEY = "testRefreshSecretKey"
-	server.JWT_ACCESS_EXPIRATION_TIME = time.Minute * 5
-	server.JWT_REFRESH_EXPIRATION_TIME = time.Minute * 10
+	core.JWT_ACCESS_SECRET_KEY = "testAccessSecretKey"
+	core.JWT_REFRESH_SECRET_KEY = "testRefreshSecretKey"
+	core.JWT_ACCESS_EXPIRATION_TIME = time.Minute * 5
+	core.JWT_REFRESH_EXPIRATION_TIME = time.Minute * 10
 }
 
 func TestJWTFunctions(t *testing.T) {
@@ -169,14 +168,14 @@ func TestJWTFunctions(t *testing.T) {
 			isActive:    true,
 			expectedErr: errors.New("error expected"),
 			testFunc: func() error {
-				server.JWT_ACCESS_EXPIRATION_TIME = time.Millisecond * 100
+				core.JWT_ACCESS_EXPIRATION_TIME = time.Millisecond * 100
 				token, err := GenerateAccessToken("1234567890", true)
 				if err != nil {
 					return err
 				}
 				time.Sleep(time.Millisecond * 200)
 				_, err = ValidateToken(token)
-				server.JWT_ACCESS_EXPIRATION_TIME = time.Minute * 5
+				core.JWT_ACCESS_EXPIRATION_TIME = time.Minute * 5
 				return err
 			},
 		},

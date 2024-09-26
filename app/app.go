@@ -5,22 +5,22 @@ package app
 */
 
 import (
-	"RestAPI/server"
+	"RestAPI/core"
 	"fmt"
 	"mime"
 	"strconv"
 	"strings"
 )
 
-func MainApplication(request *server.HttpRequest) ([]byte, error) {
+func MainApplication(request *core.HttpRequest) ([]byte, error) {
 	if request == nil {
-		return server.HTTP400.ToBytes(), nil
+		return core.HTTP400.ToBytes(), nil
 	}
 	if request.Method == "OPTIONS" {
-		response := server.HTTP200
-		allowedOrigins := strings.Join(server.ALLOWED_HOSTS, ", ")
-		allowedMethods := strings.Join(server.ALLOWED_METHODS, ", ")
-		allowedContentTypes := strings.Join(server.SUPPORTED_MEDIA_TYPES, ", ")
+		response := core.HTTP200
+		allowedOrigins := strings.Join(core.ALLOWED_HOSTS, ", ")
+		allowedMethods := strings.Join(core.ALLOWED_METHODS, ", ")
+		allowedContentTypes := strings.Join(core.SUPPORTED_MEDIA_TYPES, ", ")
 		response.SetHeader("Access-Control-Allow-Origin", allowedOrigins)
 		response.SetHeader("Access-Control-Allow-Methods", allowedMethods)
 		response.SetHeader("Access-Control-Allow-Headers", "*")
@@ -34,13 +34,13 @@ func MainApplication(request *server.HttpRequest) ([]byte, error) {
 		er := request.ParseFormData()
 		if er != nil {
 			fmt.Println("Error parsing form data:", er)
-			return server.HTTP400.ToBytes(), nil
+			return core.HTTP400.ToBytes(), nil
 		}
 	}
 
 	view := router(request.Url)
 	if view == nil {
-		return server.HTTP404.ToBytes(), nil
+		return core.HTTP404.ToBytes(), nil
 	}
 
 	response := view(*request)

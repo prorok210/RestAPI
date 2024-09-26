@@ -1,7 +1,8 @@
 package user
 
 import (
-	"RestAPI/server"
+	"RestAPI/core"
+	"RestAPI/db"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,9 +10,13 @@ import (
 	"strconv"
 )
 
-func CreateUserHandler(request server.HttpRequest) server.HttpResponse {
+type User struct {
+	db.User
+}
+
+func CreateUserHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "POST" {
-		return server.HTTP405
+		return core.HTTP405
 	}
 
 	jsonString := request.Body
@@ -20,7 +25,7 @@ func CreateUserHandler(request server.HttpRequest) server.HttpResponse {
 
 	err := json.Unmarshal([]byte(jsonString), user)
 	if err != nil {
-		response := server.HTTP400
+		response := core.HTTP400
 		response.Body = `{"Message": "Invalid JSON"}`
 		return response
 	}
@@ -31,25 +36,23 @@ func CreateUserHandler(request server.HttpRequest) server.HttpResponse {
 	err = user.SendSMS(fmt.Sprintf("Your OTP is %s", otp))
 	if err != nil {
 		log.Println("Error sending SMS:", err)
-		response := server.HTTP500
+		response := core.HTTP500
 		response.Body = `{"Message": "Internal server error"}`
 		return response
 	}
 
-	userStore[user.Mobile] = user
-
-	response := server.HTTP201
+	response := core.HTTP201
 	response.Body = `{"Message": "User created, please verify"}`
 	return response
 }
 
-func VerifyUserHandler(request server.HttpRequest) server.HttpResponse {
+func VerifyUserHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "POST" {
-		return server.HTTP405
+		return core.HTTP405
 	}
 
 	if request.Body == "" {
-		response := server.HTTP400
+		response := core.HTTP400
 		response.Body = `{"Message": "Invalid JSON"}`
 		return response
 	}
@@ -60,32 +63,17 @@ func VerifyUserHandler(request server.HttpRequest) server.HttpResponse {
 
 	err := json.Unmarshal([]byte(jsonString), tmpUser)
 	if err != nil {
-		response := server.HTTP400
+		response := core.HTTP400
 		response.Body = `{"Message": "Invalid JSON"}`
 		return response
 	}
 
-	if len(userStore) == 0 {
-		response := server.HTTP400
-		response.Body = `{"Message": "User not found"}`
-		return response
-	}
-
-	if userStore[tmpUser.Mobile].Otp == tmpUser.Otp {
-		userStore[tmpUser.Mobile].isActive = true
-		response := server.HTTP200
-		response.Body = `{"Message": "User verified"}`
-		return response
-	} else {
-		response := server.HTTP401
-		response.Body = `{"Message": "User not verified"}`
-		return response
-	}
+	return core.HTTP200
 }
 
-func CreateUserFormdataHandler(request server.HttpRequest) server.HttpResponse {
+func CreateUserFormdataHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "POST" {
-		return server.HTTP405
+		return core.HTTP405
 	}
 
 	user := new(User)
@@ -98,18 +86,18 @@ func CreateUserFormdataHandler(request server.HttpRequest) server.HttpResponse {
 	age, err := strconv.Atoi(request.FormData.Fields["age"])
 	if err != nil {
 		fmt.Println("Ошибка при конвертации возраста:", err)
-		return server.HTTP400
+		return core.HTTP400
 	}
 	user.Age = age
 
 	saveFile := func(filename string, fileData []byte) error {
 		currentDir, er := os.Getwd()
-		filePath := currentDir + server.IMAGES_DIR + "/" + filename
+		filePath := currentDir + core.IMAGES_DIR + "/" + filename
 		if er != nil {
 			return er
 		}
-		if _, err := os.Stat(currentDir + server.IMAGES_DIR); os.IsNotExist(err) {
-			err := os.MkdirAll(currentDir+server.IMAGES_DIR, 0755)
+		if _, err := os.Stat(currentDir + core.IMAGES_DIR); os.IsNotExist(err) {
+			err := os.MkdirAll(currentDir+core.IMAGES_DIR, 0755)
 			if err != nil {
 				return err
 			}
@@ -132,45 +120,45 @@ func CreateUserFormdataHandler(request server.HttpRequest) server.HttpResponse {
 		er := saveFile(fileData.FileName, fileData.FileData)
 		if er != nil {
 			fmt.Println("Error saving file:", er)
-			return server.HTTP500
+			return core.HTTP500
 		}
 	}
 
 	jsonData, err := json.Marshal(user)
 	if err != nil {
 		fmt.Println("Error marshaling user:", err)
-		return server.HTTP500
+		return core.HTTP500
 	}
-	response := server.HTTP201
+	response := core.HTTP201
 	response.Body = string(jsonData)
 	return response
 }
 
-func ImageHandler(request server.HttpRequest) server.HttpResponse {
+func ImageHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "GET" {
-		return server.HTTP405
+		return core.HTTP405
 	}
 
 	currentDir, er := os.Getwd()
 	if er != nil {
 		fmt.Println("Error getting current directory:", er)
-		return server.HTTP500
+		return core.HTTP500
 	}
 
 	filename := request.Query["filename"]
 
-	filePath := currentDir + server.IMAGES_DIR + "/" + filename
+	filePath := currentDir + core.IMAGES_DIR + "/" + filename
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return server.HTTP404
+		return core.HTTP404
 	}
 
 	fileData, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
-		return server.HTTP500
+		return core.HTTP500
 	}
 
-	response := server.HTTP200
+	response := core.HTTP200
 	response.Body = string(fileData)
 	response.SetHeader("Content-Type", "image/jpeg")
 	return response
