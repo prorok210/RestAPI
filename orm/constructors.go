@@ -1,4 +1,4 @@
-package main
+package orm
 
 // User structure constructor
 func NewUser(name string, email string) *User {

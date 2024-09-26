@@ -1,4 +1,4 @@
-package main
+package orm
 
 /*	1. Create new table Model in file Models.go and a new model with objects of this table
  	2. Add new record in tableRegistry and typeMap in file constants.go
@@ -8,18 +8,18 @@ package main
 	6. All structure fields starting with a capital letter, all other letters are small
 */
 
-import (
-	"context"
-	"fmt"
-)
+// import (
+// 	"context"
+// 	"fmt"
+// )
 
-func main() {
-	err := InitDB()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer conn.Close(context.Background())
+// func main() {
+// 	err := InitDB()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return
+// 	}
+// 	defer conn.Close(context.Background())
 
 	// Get all users
 

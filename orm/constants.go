@@ -1,4 +1,4 @@
-package main
+package orm
 
 import (
 	"reflect"
