@@ -2,25 +2,30 @@ package app
 
 import (
 	"RestAPI/server"
-	"RestAPI/userApp"
+	"RestAPI/user"
 )
 
-type viewFunc func(server.HttpRequest) (server.HttpResponse)
+type HandlerFunc func(server.HttpRequest) server.HttpResponse
 
+var viewsList = make(map[string]HandlerFunc)
 
-var viewsList = make(map[string]viewFunc)
-
-
-func registerView(url string, f viewFunc) {
+func registerHandler(url string, f HandlerFunc) {
 	viewsList[url] = f
 }
 
-func router(url string) (viewFunc) {
+func router(url string) HandlerFunc {
 	return viewsList[url]
 }
 
-func InitViews() {
-	registerView("/hello", userApp.HelloView)
-	registerView("/goodbye", userApp.GoodbyeView)
-	registerView("/add", userApp.AddView)
+/*
+	Функция InitHandler() - инициализация списка представлений
+	После создания представлений их необходимо зарегистрировать в этой функции, чтобы они были доступны для обработки запросов
+	Роутер выдаст указатель на функцию, которая будет обрабатывать запрос или nil, если функции не нашлось
+*/
+
+func InitHandlers() {
+	registerHandler("/images", user.ImageHandler)
+	registerHandler("/createUser", user.CreateUserHandler)
+	registerHandler("/verifyUser", user.VerifyUserHandler)
+	registerHandler("/createUserForm", user.CreateUserFormdataHandler)
 }

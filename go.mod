@@ -2,9 +2,8 @@ module RestAPI
 
 go 1.23.1
 
-require github.com/jackc/pgx/v5 v5.7.1
-
 require (
+	github.com/jackc/pgx/v5 v5.7.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect
@@ -21,4 +20,6 @@ require (
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 )

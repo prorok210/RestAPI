@@ -1,10 +1,16 @@
 package server
 
 import (
+	"bufio"
+	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -12,50 +18,143 @@ import (
 
 type RequestHandler func(request *HttpRequest) ([]byte, error)
 
+//go:generate moq --out=mocks/Conn_moq_test.go . Conn
+type Conn interface {
+	net.Conn
+}
+
 type Server struct {
-	servAddr 		string
-	listener 		net.Listener
+	httpAddr  		string
+	httpsAddr 		string
+	httpListener  	net.Listener
+	httpsListener	net.Listener
 	handleApp 		RequestHandler
+	certFile  		string
+	keyFile   		string
 }
 
 func CreateServer(mainApplication RequestHandler) (*Server, error) {
-	addr:= HOST + ":" + strconv.Itoa(PORT)
+	regex := regexp.MustCompile(`^([a-zA-Z0-9.-]+):([0-9]{1,5})$`)
+	httpAddr := HOST + ":" + strconv.Itoa(HTTP_PORT)
+	httpsAddr := HOST + ":" + strconv.Itoa(HTTPS_PORT)
+	if !regex.MatchString(httpAddr) || !regex.MatchString(httpsAddr) {
+		log.Println("Invalid address format")
+		return nil, errors.New("Invalid address format")
+	}
+	if mainApplication == nil {
+		log.Println("Main application handler is not set")
+		return nil, errors.New("Main application handler is not set")
+	}
+
 	server := &Server{
-		servAddr: addr,
-		handleApp: 	mainApplication,
+		httpAddr:  httpAddr,
+		httpsAddr: httpsAddr,
+		handleApp: mainApplication,
+		certFile: CERT_FILE,
+		keyFile:  KEY_FILE,
 	}
 	return server, nil
 }
 
-func (s* Server) Start() error {
+func (s *Server) Start() error {
+	if _, err := os.Stat(s.certFile); os.IsNotExist(err) {
+        return fmt.Errorf("certificate file not found: %s", s.certFile)
+    }
+    if _, err := os.Stat(s.keyFile); os.IsNotExist(err) {
+        return fmt.Errorf("key file not found: %s", s.keyFile)
+    }
+
 	log.Println("Starting server ...")
-	listener, er := net.Listen("tcp", s.servAddr)
+	if s == nil {
+		log.Println("Server is not created")
+		return errors.New("Server is not created")
+	}
+
+	if s.httpAddr == "" || s.handleApp == nil {
+		log.Println("Server address or handle func is not set")
+		return errors.New("Server address or handle func is not set")
+	}
+
+	listener, er := net.Listen("tcp", s.httpAddr)
 	if er != nil {
 		log.Println("Error starting server", er)
 		return er
 	}
-	s.listener = listener
+	s.httpListener = listener
+	go s.ListenHTTP()
 
-	log.Println("Server started successfully on ", s.servAddr)
+	log.Println("Http server started successfully on ", s.httpAddr)
 
-	s.Listen()
+	cert, err := tls.LoadX509KeyPair(s.certFile, s.keyFile)
+	if err != nil {
+		log.Printf("Error loading SSL certificates: %v", err)
+		return err
+	}
+
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
+	httpsListener, err := tls.Listen("tcp", s.httpsAddr, config)
+	if err != nil {
+		log.Printf("Error starting HTTPS server: %v", err)
+		return err
+	}
+	s.httpsListener = httpsListener
+	go s.ListenHTTPS()
+
+	log.Println("Https server started successfully on ", s.httpsAddr)
 
 	return nil
 }
 
-func (s* Server) Listen(){
-	log.Println("Listening for incoming connections")
-	defer s.listener.Close()
-	defer log.Println("Server stopped")
+func (s *Server) ListenHTTP() {
+	defer s.httpListener.Close()
+	defer log.Println("Http server stopped")
 
 	for {
-		clientConn, er := s.listener.Accept()
+		clientConn, er := s.httpListener.Accept()
 		if er != nil {
 			log.Println("Error accepting connection", er)
 			continue
 		}
 
-		if  isAllowedHostMiddleware(clientConn.RemoteAddr().String()) {
+		go func (clientConn Conn) {
+			defer clientConn.Close()
+			defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
+
+			reader := bufio.NewReader(clientConn)
+			reqLine, _, err := reader.ReadLine()
+			if err != nil {
+				log.Println("Error reading HTTP request: ", err)
+				return
+			}
+
+			parts := strings.Split(string(reqLine), " ")
+			if len(parts) < 2 {
+				log.Println("Invalid HTTP request")
+				return
+			}
+
+			path := parts[1]
+			httpsHost := strings.Split(s.httpsAddr, ":")[0]
+			httpsURL := fmt.Sprintf("https://%s%s", httpsHost, path)
+
+			response := fmt.Sprintf("HTTP/1.1 301 Moved Permanently\r\nLocation: %s\r\nConnection: close\r\n\r\n", httpsURL)
+			clientConn.Write([]byte(response))
+		}(clientConn)
+	}
+}
+
+func (s *Server) ListenHTTPS() {
+	defer s.httpsListener.Close()
+	defer log.Println("Https server stopped")
+
+	for {
+		clientConn, err := s.httpsListener.Accept()
+		if err != nil {
+			log.Println("Error accepting HTTPS connection", err)
+			continue
+		}
+
+		if isAllowedHostMiddleware(clientConn.RemoteAddr().String()) {
 			log.Println("Connection accepted from: ", clientConn.RemoteAddr().String())
 			go s.ConnProcessing(clientConn)
 		} else {
@@ -65,45 +164,93 @@ func (s* Server) Listen(){
 	}
 }
 
-
-func (s* Server) ConnProcessing(clientConn net.Conn) {
+func (s *Server) ConnProcessing(clientConn Conn) {
 	defer clientConn.Close()
 	defer log.Println("Connection closed with: ", clientConn.RemoteAddr().String())
 
-	clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
+	tlsConn, ok := clientConn.(*tls.Conn)
+	if !ok {
+		log.Println("Error type assertion")
+		return
+	}
 
-	buf := make([]byte, BUFSIZE)
+	er := tlsConn.Handshake()
+	if er != nil {
+		log.Println("Error TLS handshake", er)
+		return
+	}
 
 	for {
-		bytesRead, er := clientConn.Read(buf)
+		clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
+
+		receivedData, er := func(clientConn Conn) ([]byte, error) {
+			reader := bufio.NewReader(clientConn)
+
+			startLine, err := reader.ReadString('\n')
+			if err != nil {
+				return nil, err
+			}
+			startLine = strings.TrimSpace(startLine)
+
+			headers := make([]byte, 0, 4096)
+			for {
+				line, err := reader.ReadBytes('\n')
+				headers = append(headers, line...)
+				if err != nil || len(bytes.TrimSpace(line)) == 0 {
+					break
+				}
+			}
+
+			contentLength := 0
+			headerLines := bytes.Split(headers, []byte("\r\n"))
+			for _, line := range headerLines {
+				if bytes.HasPrefix(bytes.ToLower(line), []byte("content-length:")) {
+					parts := bytes.SplitN(line, []byte(":"), 2)
+					if len(parts) == 2 {
+						contentLength, _ = strconv.Atoi(string(bytes.TrimSpace(parts[1])))
+						break
+					}
+				}
+			}
+
+			body := make([]byte, contentLength)
+			_, err = io.ReadFull(reader, body)
+			if err != nil {
+				return nil, err
+			}
+
+			fullRequest := append([]byte(startLine+"\r\n"), headers...)
+			fullRequest = append(fullRequest, body...)
+
+			return fullRequest, nil
+		}(clientConn)
+
 		if er != nil {
 			if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
 				log.Println("Read timeout", netErr)
 				clientConn.Write(HTTP408.ToBytes())
-				return
-			}
-			if er.Error() == "EOF" {
+			} else if er == io.EOF {
 				log.Println("Connection closed by client")
-				return
+			} else {
+				log.Println("Error reading request", er)
+				clientConn.Write(HTTP400.ToBytes())
 			}
-			log.Println("Error reading request", er)
-			clientConn.Write(HTTP400.ToBytes())
-			continue
+			return
 		}
 
-		log.Println(clientConn.RemoteAddr().String(), strings.Split(string(buf[:bytesRead]), "\n")[0])
+		log.Println(clientConn.RemoteAddr().String(), strings.Split(string(receivedData), "\n")[0])
 
-		request := new(HttpRequest)
-		er = request.ParseRequest(buf[:bytesRead])
-		if er != nil {
-			log.Println("Error parsing request", er)
+		request := &HttpRequest{}
+		err := request.ParseRequest(receivedData)
+		if err != nil {
+			log.Println("Error parsing request", err)
 			clientConn.Write(HTTP400.ToBytes())
-			continue
+			return
 		}
 
 		er = reqMiddleware(request, clientConn)
 		if er != nil {
-			log.Println("Error in middleware", er)
+			log.Println("Error in request middleware", er)
 			return
 		}
 
@@ -113,23 +260,15 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 			clientConn.Write(HTTP500.ToBytes())
 			continue
 		}
-		fmt.Println("Response: ", string(response))
 
-		go func() {
-			_, er = clientConn.Write(response)
-			if er != nil {
-				if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
-					log.Println("Write timeout", netErr)
-					clientConn.Write(HTTP408.ToBytes())
-					return
-				}
-				log.Println("Error writing response", er)
-				return
-			} else {
-				log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
-			}
-		}()
-		
+		clientConn.SetWriteDeadline(time.Now().Add(WRITE_TIMEOUT * time.Second))
+		_, err = clientConn.Write(response)
+		if err != nil {
+			log.Println("Error writing response", err)
+			return
+		}
+		log.Println(clientConn.RemoteAddr().String(), strings.Split(string(response), "\n")[0])
+
 		er = keepAliveMiddleware(request, clientConn)
 		if er != nil {
 			log.Println("Error in keep-alive middleware", er)
@@ -138,82 +277,18 @@ func (s* Server) ConnProcessing(clientConn net.Conn) {
 	}
 }
 
-
-func isAllowedHostMiddleware(clientAddr string) bool {
-	for _, allowedHost := range ALLOWED_HOSTS {
-		if strings.Split(clientAddr, ":")[0] == allowedHost {
-			return true
-		}
-	}
-	return false
-}
-
-func reqMiddleware(request *HttpRequest, clientConn net.Conn ) (error) {
-
-	methodFlag := false
-	for _, allowedMethod := range ALLOWED_METHODS {
-		if request.Method == allowedMethod {
-			methodFlag = true
-			break
-		}
-	}
-	if !methodFlag {
-		clientConn.Write(HTTP405.ToBytes())
-		return errors.New("Method not allowed")
+func (s *Server) Stop() {
+	if s == nil {
+		log.Println("Server is not created")
+		return
 	}
 
-	contentTypeFlag := false
-	for _, supportedMediaType := range SUPPORTED_MEDIA_TYPES {
-		if request.Body == "" {
-			contentTypeFlag = true
-			break
-		}
-		if request.Headers["Content-Type"] == supportedMediaType {
-			contentTypeFlag = true
-			break
-		}
-	}
-	if !contentTypeFlag {
-		clientConn.Write(HTTP415.ToBytes())
-		return errors.New("Unsupported media type")
+	if s.httpListener == nil || s.httpsListener == nil {
+		log.Println("Server is not started")
+		return
 	}
 
-	contentLengthFlag := false
-	contentLengthStr := request.Headers["Content-Length"]
-	if contentLengthStr != "0" && len(request.Body) > 0 {
-		contentLength, err := strconv.Atoi(contentLengthStr)
-		if err != nil {
-			log.Println("Invalid Content-Length:", contentLengthStr)
-		} else {
-			if contentLength == len(request.Body) {
-				contentLengthFlag = true
-			}
-		}
-	}
-	if contentLengthStr == "0" && len(request.Body) == 0 {
-		contentLengthFlag = true
-	}
-	if !contentLengthFlag {
-		clientConn.Write(HTTP411.ToBytes())
-		return errors.New("Content-Length required")
-	}
-
-	return nil
-}
-
-func keepAliveMiddleware(request *HttpRequest, clientConn net.Conn) (error) {
-	for key := range request.Headers {
-		if key == "Connection" {
-			if request.Headers[key] == "close" {
-				return errors.New("Connection: close")
-			}
-			if request.Headers[key] == "keep-alive" {
-				clientConn.SetDeadline(time.Now().Add(CONN_TIMEOUT * time.Second))
-			}
-			if request.Headers[key] == "" {
-				return errors.New("Connection: close")
-			}
-		}
-	}
-	return nil
+	log.Println("Stopping server ...")
+	s.httpListener.Close()
+	s.httpsListener.Close()
 }
