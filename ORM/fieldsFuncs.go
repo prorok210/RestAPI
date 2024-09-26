@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (user *User) ToFields() ([]interface{}, []string) {
@@ -42,102 +40,6 @@ func extractFields(obj interface{}) ([]interface{}, []string) {
 		values = append(values, val.Field(i).Interface())
 	}
 	return values, columns
-}
-
-func InitDB() error {
-	var InitDBError error
-	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
-	if InitDBError != nil {
-		return fmt.Errorf("database connect error: %v", InitDBError)
-	}
-
-	// checking tables for compliance with structures
-	err := CheckTables()
-	if err != nil {
-		return fmt.Errorf("error checking tables: %v", err)
-	}
-
-	fmt.Println("Successfully connected to the database.")
-
-	return nil
-}
-
-func CreateTable(obj interface{}) error {
-	data := reflect.TypeOf(obj)
-
-	var tableName string
-
-	// Checking the presence of the field
-	field, found := data.FieldByName("TableName")
-	if found {
-		// Getting the field value
-		userValue := reflect.ValueOf(obj)
-		fieldValue := userValue.FieldByName("TableName")
-
-		if fieldValue.IsValid() {
-			tableName = fieldValue.String()
-
-			fmt.Printf("Field '%s' was found in the structure. Value: %s\n", field.Name, tableName)
-		} else {
-			return fmt.Errorf("field '%s' was found, but its value is not available", field.Name)
-		}
-	} else {
-		return fmt.Errorf("field 'TableName' was not found in the structure")
-	}
-
-	// Checking a table exists or not
-	var exists bool
-	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
-	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
-
-	if err != nil {
-		return fmt.Errorf("error checking table existence: %v", err)
-	}
-
-	if exists {
-		fmt.Println("Table already exists.")
-		return nil
-	}
-
-	sqlQuery := "CREATE TABLE IF NOT EXISTS " + tableName + " ("
-
-	for i := 0; i < data.NumField(); i++ {
-		field := data.Field(i)
-		if field.Name == "TableName" {
-			continue
-		}
-		ormTag := field.Tag.Get("orm")
-		ormTag = strings.Replace(ormTag, "_", " ", -1)
-		if ormTag == "" {
-			return fmt.Errorf("field %s does not have a tag", field.Name)
-		} else if strings.Contains(ormTag, "ref") {
-			// Looking for the index of the substring "ref"
-			start := strings.Index(ormTag, "ref")
-
-			// Getting the substring from the index to the end of the string
-			match := ormTag[start:]
-			// Removing the substring from the tag
-			ormTag = strings.Replace(ormTag, " "+match, "", -1)
-			// Add the field name and value from the orm tag with reference
-			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
-		} else {
-			// Add the field name and value from the orm tag with reference
-			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
-		}
-	}
-	// Remove the last comma and space
-	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
-	sqlQuery += ");"
-
-	fmt.Println(sqlQuery)
-
-	_, err = conn.Exec(context.Background(), sqlQuery)
-	if err != nil {
-		return fmt.Errorf("error creating table %s", err)
-	} else {
-		fmt.Println("Table created successfully")
-	}
-	return nil
 }
 
 // Function for creating a new table object based on obj.TableName
@@ -227,16 +129,4 @@ func convertObject(obj interface{}, tableName string) (interface{}, error) {
 	}
 
 	return obj, nil
-}
-
-func find_rule(tag string, rule string) string {
-	start := strings.Index(tag, rule)
-	end := start + strings.Index(tag[start:], " ")
-	fmt.Println("RULE", start, end, tag, rule, strings.Index(tag[start:], " "))
-	if start == -1 || end < start {
-		return ""
-	}
-	rule = strings.ToUpper(strings.Replace(rule, "_", " ", -1))
-	rule += strings.ToUpper(tag[start:end])
-	return rule
 }

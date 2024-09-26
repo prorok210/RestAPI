@@ -6,7 +6,105 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
+
+func InitDB() error {
+	var InitDBError error
+	conn, InitDBError = pgx.Connect(context.Background(), CONNECTIONDATA)
+	if InitDBError != nil {
+		return fmt.Errorf("database connect error: %v", InitDBError)
+	}
+
+	// checking tables for compliance with structures
+	err := CheckTables()
+	if err != nil {
+		return fmt.Errorf("error checking tables: %v", err)
+	}
+
+	fmt.Println("Successfully connected to the database.")
+
+	return nil
+}
+
+func CreateTable(obj interface{}) error {
+	data := reflect.TypeOf(obj)
+
+	var tableName string
+
+	// Checking the presence of the field
+	field, found := data.FieldByName("TableName")
+	if found {
+		// Getting the field value
+		userValue := reflect.ValueOf(obj)
+		fieldValue := userValue.FieldByName("TableName")
+
+		if fieldValue.IsValid() {
+			tableName = fieldValue.String()
+
+			fmt.Printf("Field '%s' was found in the structure. Value: %s\n", field.Name, tableName)
+		} else {
+			return fmt.Errorf("field '%s' was found, but its value is not available", field.Name)
+		}
+	} else {
+		return fmt.Errorf("field 'TableName' was not found in the structure")
+	}
+
+	// Checking a table exists or not
+	var exists bool
+	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
+	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
+
+	if err != nil {
+		return fmt.Errorf("error checking table existence: %v", err)
+	}
+
+	if exists {
+		fmt.Println("Table already exists.")
+		return nil
+	}
+
+	sqlQuery := "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+
+	for i := 0; i < data.NumField(); i++ {
+		field := data.Field(i)
+		if field.Name == "TableName" {
+			continue
+		}
+		ormTag := field.Tag.Get("orm")
+		ormTag = strings.Replace(ormTag, "_", " ", -1)
+		if ormTag == "" {
+			return fmt.Errorf("field %s does not have a tag", field.Name)
+		} else if strings.Contains(ormTag, "ref") {
+			// Looking for the index of the substring "ref"
+			start := strings.Index(ormTag, "ref")
+
+			// Getting the substring from the index to the end of the string
+			match := ormTag[start:]
+			// Removing the substring from the tag
+			ormTag = strings.Replace(ormTag, " "+match, "", -1)
+			// Add the field name and value from the orm tag with reference
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
+		} else {
+			// Add the field name and value from the orm tag with reference
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
+		}
+	}
+	// Remove the last comma and space
+	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
+	sqlQuery += ");"
+
+	fmt.Println(sqlQuery)
+
+	_, err = conn.Exec(context.Background(), sqlQuery)
+	if err != nil {
+		return fmt.Errorf("error creating table %s", err)
+	} else {
+		fmt.Println("Table created successfully")
+	}
+	return nil
+}
 
 // Function for checking the similarity of tables in database and structures
 func CheckTables() error {
@@ -34,10 +132,10 @@ func CheckTables() error {
 		if err != nil {
 			return fmt.Errorf("error comparing columns %s: %v", tableName, err)
 		}
-		if !ok {
-			fmt.Printf("Difference in table structure %s!\n", tableName)
-		} else {
+		if ok {
 			fmt.Printf("Table %s matches the model\n", tableName)
+		} else {
+			fmt.Printf("Difference in table structure %s!\n", tableName)
 		}
 	}
 
@@ -46,6 +144,7 @@ func CheckTables() error {
 
 // Getting a list of table columns from a database
 func getTableColumns(tableName string) (map[string]map[string]string, error) {
+	// use service tables to get column data
 	query := fmt.Sprintf(`
 	SELECT
     	c.column_name,
@@ -83,8 +182,6 @@ func getTableColumns(tableName string) (map[string]map[string]string, error) {
 			return nil, fmt.Errorf("line reading error: %v", err)
 		}
 
-		// fmt.Println("UD", updateRule.String, deleteRule.String)
-
 		columnDetails := map[string]string{
 			"column_name":     columnName.String,
 			"data_type":       dataType.String,
@@ -95,7 +192,6 @@ func getTableColumns(tableName string) (map[string]map[string]string, error) {
 		}
 
 		columns[columnName.String] = columnDetails
-		// fmt.Println("CD", columnDetails, columnName.String)
 	}
 
 	return columns, nil
@@ -121,16 +217,20 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 
 		column := columns[strings.ToLower(field.Name)]
 
+		// Get orm tags
 		ormTag := strings.ToLower(field.Tag.Get("orm"))
 		fmt.Println("ormTag", ormTag)
 		if ormTag != "" {
+			// every attribute is separated by a space
 			ormTagSlice := strings.Split(ormTag, " ")
+			// first attribute is the type. Translating attributes into sql text
 			value, ok := tagToSqlType[ormTagSlice[0]]
 			if !ok {
 				return nil, fmt.Errorf("unknown type %s. You can add it in tagToSqlType in constants.go", ormTagSlice[0])
 			} else {
 				column["data_type"] = value
 			}
+			// Filling the column with data
 			if Contains(ormTagSlice, "serial_primary_key") {
 				column["constraint_type"] = "PRIMARY KEY"
 				column["is_identity"] = "true"
@@ -140,18 +240,13 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 				column["constraint_type"] = "FOREIGN KEY"
 				column["is_identity"] = "true"
 				if Contains(ormTagSlice, "on_update") {
-					fmt.Println("on_update contains")
 					updateRule := find_rule(ormTag, "on_update")
 					column["update_rule"] = updateRule
-				} else {
-					fmt.Println("on_update NOOOO contains")
 				}
 				if Contains(ormTagSlice, "on_delete") {
 					fmt.Println("on_delete contains")
 					deleteRule := find_rule(ormTag, "on_delete")
-					column["update_rule"] = deleteRule
-				} else {
-					fmt.Println("on_delete NOOOOO scontains")
+					column["delete_rule"] = deleteRule
 				}
 			}
 			if Contains(ormTagSlice, "not_null") {
@@ -187,10 +282,27 @@ func compareColumns(dbColumns, modelColumns map[string]map[string]string) (bool,
 		// Checking the similarity of the columns
 		for key, value := range valueDb {
 			if value != valueModel[key] {
+				fmt.Println("FIELDS", key, value, valueModel[key])
 				return false, fmt.Errorf("column %s does not match the model, db: %s and model: %s", key, value, valueModel[key])
 			}
 		}
 	}
 
 	return true, nil
+}
+
+func find_rule(tag string, rule string) string {
+	// find rule in tag
+	start := strings.Index(tag, rule)
+	end := start + strings.Index(tag[start:], " ")
+	// if end not found
+	if end == start-1 {
+		end = len(tag)
+	}
+	result := strings.ToUpper(strings.Replace(tag[start:end], "_", " ", -1))
+	// for SET NULL case
+	if len(strings.Split(result, " ")) < 3 {
+		return ""
+	}
+	return strings.Join(strings.Split(result, " ")[2:], "")
 }
