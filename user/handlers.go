@@ -14,6 +14,29 @@ type User struct {
 	db.User
 }
 
+/*
+docs(
+
+	tag: "user";
+	name: "CreateUser";
+	path: "/user/create";
+	method: "POST";
+	summary: "Create a new user";
+	description: "Create a new user with the given data";
+	isAuth: false;
+	requestbody: `{
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	}`;
+	responsebody: `{
+		"Message": "User created, please verify"
+	}`;
+
+)docs
+*/
 func CreateUserHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "POST" {
 		return core.HTTP405
@@ -46,6 +69,26 @@ func CreateUserHandler(request core.HttpRequest) core.HttpResponse {
 	return response
 }
 
+/*
+docs(
+
+	name: "VerifyUserHandler";
+	tag: "user";
+	path: "/user/verify";
+	method: "POST";
+	summary: "Verify user";
+	description: "Verify user with the given data";
+	isAuth: false;
+	requestbody: `{
+		"mobile": "string",
+		"otp": "string"
+	}`;
+	responsebody: `{
+		"Message": "User verified"
+	}`;
+
+)docs
+*/
 func VerifyUserHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "POST" {
 		return core.HTTP405
@@ -71,6 +114,33 @@ func VerifyUserHandler(request core.HttpRequest) core.HttpResponse {
 	return core.HTTP200
 }
 
+/*
+docs(
+
+	name: "CreateUserFormdataHandler";
+	tag: "user";
+	path: "/user/createformdata";
+	method: "POST";
+	summary: "Create a new user with form data";
+	description: "Create a new user with the given data and images";
+	isAuth: false;
+	requestbody: `{
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	}`;
+	responsebody: `{
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	}`;
+
+)docs
+*/
 func CreateUserFormdataHandler(request core.HttpRequest) core.HttpResponse {
 	if request.Method != "POST" {
 		return core.HTTP405
