@@ -13,11 +13,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var APPS = []string{
+	"user",
+	"chats",
+}
+
 const (
 	// Настройки сервера
 	HOST          string        = "localhost"
-	HTTP_PORT     int           = 8081
-	HTTPS_PORT    int           = 8445
+	HTTP_PORT     int           = 8080
+	HTTPS_PORT    int           = 8443
 	CERT_FILE     string        = "/home/user/etc/ssl/certs/dev.crt"
 	KEY_FILE      string        = "/home/user/etc/ssl/private/dev.key"
 	CONN_TIMEOUT  time.Duration = 20

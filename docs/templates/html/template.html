@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{.CSSPath}}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>API Documentation</h1>
+
+        {{range $tag, $handlers := .Handlers}}
+
+        <section>
+            <h2>{{$tag}}</h2>
+            {{range $handler := $handlers}}
+
+            <div class="route-block">
+
+                <div class="route-header {{.Method | lower}}">
+                    <div class="route-type">
+                        <span class="method {{.Method | lower}}">{{.Method}}</span>
+                        {{.Path}}
+                    </div>
+                    <div>
+                        {{if eq .IsAuth "true"}}
+                        <span class="auth-required">🔒</span>
+                        {{end}}
+                        <span>▼</span>
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <p><strong>Summary:</strong> {{.Summary}}</p>
+                    <p><strong>Description:</strong> {{.Description}}</p>
+
+                    {{if .RequestBody}}
+                    <h4>Request body:</h4>
+                    <div class="code-block">
+                        <pre>{{.RequestBody}}</pre>
+                    </div>
+                    {{end}}
+
+                    <button class="try-it-out {{.Method | lower}}">Try it out</button>
+
+                    <form id="request-form-{{.Name}}" class="request-form">
+                        <label for="content-type-{{.Name}}">Select Content Type:</label>
+                        <select id="content-type-{{.Name}}" name="content-type">
+                            {{range .ReqContentTypes}}
+                            <option value="{{.}}">{{.}}</option>
+                            {{end}}
+                        </select><br>
+                        {{if .RequestBody}}
+                        <div id="json-input-{{.Name}}" class="input-field">
+                            <textarea id="json-body-{{.Name}}" name="json-body" placeholder='{{.RequestBody}}'
+                                required>{{.RequestBody}}</textarea><br>
+                        </div>
+                        {{end}}
+
+                        <button type="submit" class="submit-button {{.Method | lower}}">Execute</button>
+                    </form>
+
+                    {{if .ResponseBody}}
+                    <h4>Response body:</h4>
+                    <div class="code-block">
+                        <pre>{{.ResponseBody}}</pre>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+
+            {{end}}
+        </section>
+
+        {{end}}
+    </div>
+    <script src="{{.JSPath}}"></script>
+</body>
+
+</html>

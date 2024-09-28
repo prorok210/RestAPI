@@ -1,6 +1,9 @@
 package app
 
-import "RestAPI/user"
+import (
+	"RestAPI/docs"
+	"RestAPI/user"
+)
 
 /*
 	Функция InitHandler() - инициализация списка представлений
@@ -10,6 +13,9 @@ import "RestAPI/user"
 */
 
 func InitHandlers() {
+	registerHandler("/api/docs", docs.GetDocs, "docs")
+	registerHandler("/api/docs/templates/css/styles.css", docs.GetDocsCSS, "docs")
+	registerHandler("/api/docs/templates/js/script.js", docs.GetDocsJS, "docs")
 	registerHandler("/images", user.ImageHandler, "images")
 	registerHandler("/createUser", user.CreateUserHandler, "createUser")
 	registerHandler("/verifyUser", user.VerifyUserHandler, "verifyUser")

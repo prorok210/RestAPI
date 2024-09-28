@@ -17,23 +17,13 @@ type User struct {
 /*
 docs(
 
-	tag: "user";
-	name: "CreateUser";
-	path: "/user/create";
-	method: "POST";
-	summary: "Create a new user";
-	description: "Create a new user with the given data";
-	isAuth: false;
-	requestbody: `{
-		"name": "string",
-		"surname": "string",
-		"mobile": "string",
-		"email": "string",
-		"age": "int"
-	}`;
-	responsebody: `{
-		"Message": "User created, please verify"
-	}`;
+	tag: user;
+	name: CreateUser;
+	path: /user/create;
+	method: DELETE;
+	summary: Create a new user;
+	description: Create a new user with the given data;
+	isAuth: true;
 
 )docs
 */
@@ -72,20 +62,23 @@ func CreateUserHandler(request core.HttpRequest) core.HttpResponse {
 /*
 docs(
 
-	name: "VerifyUserHandler";
-	tag: "user";
-	path: "/user/verify";
-	method: "POST";
-	summary: "Verify user";
-	description: "Verify user with the given data";
+	name: VerifyUserHandler;
+	tag: user;
+	path: /user/verify;
+	method: GET;
+	сontent_type: application/json;
+	summary: Verify user;
+	description: Verify user with the given data;
 	isAuth: false;
-	requestbody: `{
+	req_content_types: application/json;
+	requestbody: {
 		"mobile": "string",
 		"otp": "string"
-	}`;
-	responsebody: `{
+	};
+	resp_content_type: application/json;
+	responsebody: {
 		"Message": "User verified"
-	}`;
+	};
 
 )docs
 */
@@ -117,27 +110,29 @@ func VerifyUserHandler(request core.HttpRequest) core.HttpResponse {
 /*
 docs(
 
-	name: "CreateUserFormdataHandler";
-	tag: "user";
-	path: "/user/createformdata";
-	method: "POST";
-	summary: "Create a new user with form data";
-	description: "Create a new user with the given data and images";
+	name: CreateUserFormdataHandler;
+	tag: user;
+	path: /user/createformdata;
+	method: POST;
+	summary: Create a new user with form data;
+	description: Create a new user with the given data and images;
 	isAuth: false;
-	requestbody: `{
+	req_content_types: application/json, multipart/form-data;
+	requestbody: {
 		"name": "string",
 		"surname": "string",
 		"mobile": "string",
 		"email": "string",
 		"age": "int"
-	}`;
-	responsebody: `{
+	};
+	resp_content_type: application/json;
+	responsebody: {
 		"name": "string",
 		"surname": "string",
 		"mobile": "string",
 		"email": "string",
 		"age": "int"
-	}`;
+	};
 
 )docs
 */

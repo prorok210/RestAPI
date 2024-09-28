@@ -3,6 +3,7 @@ package main
 import (
 	"RestAPI/app"
 	"RestAPI/core"
+	"RestAPI/docs"
 	"RestAPI/orm"
 	"log"
 )
@@ -26,6 +27,12 @@ func main() {
 	}
 
 	app.InitHandlers()
+
+	er = docs.GenerateDocs()
+	if er != nil {
+		log.Println("Error generating docs", er)
+		return
+	}
 
 	er = serv.Start()
 	if er != nil {

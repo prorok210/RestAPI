@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="docs/templates/css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>API Documentation</h1>
+
+        
+
+        <section>
+            <h2>chats</h2>
+            
+
+            <div class="route-block">
+
+                <div class="route-header post">
+                    <div class="route-type">
+                        <span class="method post">POST</span>
+                        /chats
+                    </div>
+                    <div>
+                        
+                        <span>▼</span>
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <p><strong>Summary:</strong> Verify user</p>
+                    <p><strong>Description:</strong> Verify user with the given data</p>
+
+                    
+                    <h4>Request body:</h4>
+                    <div class="code-block">
+                        <pre>{
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;otp&#34;: &#34;string&#34;
+}
+</pre>
+                    </div>
+                    
+
+                    <button class="try-it-out post">Try it out</button>
+
+                    <form id="request-form-GetChat" class="request-form">
+                        <label for="content-type-GetChat">Select Content Type:</label>
+                        <select id="content-type-GetChat" name="content-type">
+                            
+                            <option value="application/json">application/json</option>
+                            
+                        </select><br>
+                        
+                        <div id="json-input-GetChat" class="input-field">
+                            <textarea id="json-body-GetChat" name="json-body" placeholder='{
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;otp&#34;: &#34;string&#34;
+}
+'
+                                required>{
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;otp&#34;: &#34;string&#34;
+}
+</textarea><br>
+                        </div>
+                        
+
+                        <button type="submit" class="submit-button post">Execute</button>
+                    </form>
+
+                    
+                    <h4>Response body:</h4>
+                    <div class="code-block">
+                        <pre>{
+	&#34;Message&#34;: &#34;User verified&#34;
+}
+</pre>
+                    </div>
+                    
+                </div>
+            </div>
+
+            
+        </section>
+
+        
+
+        <section>
+            <h2>user</h2>
+            
+
+            <div class="route-block">
+
+                <div class="route-header delete">
+                    <div class="route-type">
+                        <span class="method delete">DELETE</span>
+                        /user/create
+                    </div>
+                    <div>
+                        
+                        <span class="auth-required">🔒</span>
+                        
+                        <span>▼</span>
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <p><strong>Summary:</strong> Create a new user</p>
+                    <p><strong>Description:</strong> Create a new user with the given data</p>
+
+                    
+
+                    <button class="try-it-out delete">Try it out</button>
+
+                    <form id="request-form-CreateUser" class="request-form">
+                        <label for="content-type-CreateUser">Select Content Type:</label>
+                        <select id="content-type-CreateUser" name="content-type">
+                            
+                        </select><br>
+                        
+
+                        <button type="submit" class="submit-button delete">Execute</button>
+                    </form>
+
+                    
+                </div>
+            </div>
+
+            
+
+            <div class="route-block">
+
+                <div class="route-header get">
+                    <div class="route-type">
+                        <span class="method get">GET</span>
+                        /user/verify
+                    </div>
+                    <div>
+                        
+                        <span>▼</span>
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <p><strong>Summary:</strong> Verify user</p>
+                    <p><strong>Description:</strong> Verify user with the given data</p>
+
+                    
+                    <h4>Request body:</h4>
+                    <div class="code-block">
+                        <pre>{
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;otp&#34;: &#34;string&#34;
+}
+</pre>
+                    </div>
+                    
+
+                    <button class="try-it-out get">Try it out</button>
+
+                    <form id="request-form-VerifyUserHandler" class="request-form">
+                        <label for="content-type-VerifyUserHandler">Select Content Type:</label>
+                        <select id="content-type-VerifyUserHandler" name="content-type">
+                            
+                            <option value="application/json">application/json</option>
+                            
+                        </select><br>
+                        
+                        <div id="json-input-VerifyUserHandler" class="input-field">
+                            <textarea id="json-body-VerifyUserHandler" name="json-body" placeholder='{
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;otp&#34;: &#34;string&#34;
+}
+'
+                                required>{
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;otp&#34;: &#34;string&#34;
+}
+</textarea><br>
+                        </div>
+                        
+
+                        <button type="submit" class="submit-button get">Execute</button>
+                    </form>
+
+                    
+                    <h4>Response body:</h4>
+                    <div class="code-block">
+                        <pre>{
+	&#34;Message&#34;: &#34;User verified&#34;
+}
+</pre>
+                    </div>
+                    
+                </div>
+            </div>
+
+            
+
+            <div class="route-block">
+
+                <div class="route-header post">
+                    <div class="route-type">
+                        <span class="method post">POST</span>
+                        /user/createformdata
+                    </div>
+                    <div>
+                        
+                        <span>▼</span>
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <p><strong>Summary:</strong> Create a new user with form data</p>
+                    <p><strong>Description:</strong> Create a new user with the given data and images</p>
+
+                    
+                    <h4>Request body:</h4>
+                    <div class="code-block">
+                        <pre>{
+	&#34;name&#34;: &#34;string&#34;,
+	&#34;surname&#34;: &#34;string&#34;,
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;email&#34;: &#34;string&#34;,
+	&#34;age&#34;: &#34;int&#34;
+}
+</pre>
+                    </div>
+                    
+
+                    <button class="try-it-out post">Try it out</button>
+
+                    <form id="request-form-CreateUserFormdataHandler" class="request-form">
+                        <label for="content-type-CreateUserFormdataHandler">Select Content Type:</label>
+                        <select id="content-type-CreateUserFormdataHandler" name="content-type">
+                            
+                            <option value="application/json">application/json</option>
+                            
+                            <option value="multipart/form-data">multipart/form-data</option>
+                            
+                        </select><br>
+                        
+                        <div id="json-input-CreateUserFormdataHandler" class="input-field">
+                            <textarea id="json-body-CreateUserFormdataHandler" name="json-body" placeholder='{
+	&#34;name&#34;: &#34;string&#34;,
+	&#34;surname&#34;: &#34;string&#34;,
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;email&#34;: &#34;string&#34;,
+	&#34;age&#34;: &#34;int&#34;
+}
+'
+                                required>{
+	&#34;name&#34;: &#34;string&#34;,
+	&#34;surname&#34;: &#34;string&#34;,
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;email&#34;: &#34;string&#34;,
+	&#34;age&#34;: &#34;int&#34;
+}
+</textarea><br>
+                        </div>
+                        
+
+                        <button type="submit" class="submit-button post">Execute</button>
+                    </form>
+
+                    
+                    <h4>Response body:</h4>
+                    <div class="code-block">
+                        <pre>{
+	&#34;name&#34;: &#34;string&#34;,
+	&#34;surname&#34;: &#34;string&#34;,
+	&#34;mobile&#34;: &#34;string&#34;,
+	&#34;email&#34;: &#34;string&#34;,
+	&#34;age&#34;: &#34;int&#34;
+}
+</pre>
+                    </div>
+                    
+                </div>
+            </div>
+
+            
+        </section>
+
+        
+    </div>
+    <script src="docs/templates/js/script.js"></script>
+</body>
+
+</html>

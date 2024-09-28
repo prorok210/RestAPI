@@ -1,0 +1,192 @@
+* {
+  --text-area-color: #082136;
+}
+
+body {
+  font-family: Inter, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #ffffff;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.content-wrapper {
+  max-width: 800px;
+  width: 100%;
+}
+h1,
+h2,
+h3,
+h4 {
+  color: #333;
+}
+section {
+  margin-bottom: 20px;
+  width: 100%;
+}
+.route-header {
+  cursor: pointer;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+.route-info {
+  display: none;
+  margin: 5px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 0 0 5px 5px;
+}
+.method {
+  padding: 5px 10px;
+  border-radius: 3px;
+  color: white;
+  font-weight: bold;
+}
+.post {
+  background-color: #49cc90;
+}
+.get {
+  background-color: #61affe;
+}
+.put {
+  background-color: #fca130;
+}
+.delete {
+  background-color: #f93e3e;
+}
+.patch {
+  background-color: #50e3c2;
+}
+
+.route-header.post {
+  background-color: #e8f6f0;
+}
+.route-header.get {
+  background-color: #ebf3fb;
+}
+.route-header.put {
+  background-color: #fff6eb;
+}
+.route-header.delete {
+  background-color: #fdf0f0;
+}
+.route-header.patch {
+  background-color: #e6faf7;
+}
+
+.code-block {
+  background-color: var(--text-area-color);
+  border: 1px solid #744f4f;
+  border-radius: 4px;
+  padding: 20px;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+  color: #e0e0e0;
+}
+.code-block pre {
+  margin: 0;
+  text-align: left;
+}
+textarea {
+  padding: 20px;
+  width: calc(99.6% - 38px);
+  height: 64px;
+  resize: vertical;
+  background-color: var(--text-area-color);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #e0e0e0;
+}
+form {
+  margin-top: 10px;
+}
+label,
+select,
+button {
+  color: #333;
+  margin-bottom: 5px;
+  display: inline-block;
+}
+select,
+button {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button.try-it-out {
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+button.try-it-out.post {
+  background-color: #49cc90;
+}
+button.try-it-out.get {
+  background-color: #61affe;
+}
+button.try-it-out.put {
+  background-color: #fca130;
+}
+button.try-it-out.delete {
+  background-color: #f93e3e;
+}
+button.try-it-out.patch {
+  background-color: #50e3c2;
+}
+
+.request-form {
+  display: none;
+  margin-top: 10px;
+}
+.submit-button {
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 10px;
+}
+.submit-button.post {
+  background-color: #49cc90;
+}
+.submit-button.get {
+  background-color: #61affe;
+}
+.submit-button.put {
+  background-color: #fca130;
+}
+.submit-button.delete {
+  background-color: #f93e3e;
+}
+.submit-button.patch {
+  background-color: #50e3c2;
+}
+
+.auth-required {
+  font-size: 20px;
+  margin-left: 10px;
+}
+
+.container {
+  width: 70%;
+}
+h1 {
+  text-align: center;
+}
+
+.route-type {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

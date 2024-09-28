@@ -1,7 +1,8 @@
-package main
+package docs
 
 import (
-	"fmt"
+	"RestAPI/core"
+	"html/template"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -9,26 +10,33 @@ import (
 )
 
 type HandlerInfo struct {
-	tag          string
-	name         string
-	path         string
-	method       string
-	summary      string
-	description  string
-	isAuth       string
-	requestbody  string
-	responsebody string
+	Tag             string
+	Name            string
+	Path            string
+	Method          string
+	ReqContentTypes []string
+	RespContentType string
+	Summary         string
+	Description     string
+	IsAuth          string
+	RequestBody     string
+	ResponseBody    string
 }
 
-var apps = []string{
-	"user",
+type PageData struct {
+	CSSPath  string
+	JSPath   string
+	Handlers map[string][]HandlerInfo
+	Lower    func(string) string
 }
 
 var handlers = make(map[string]*HandlerInfo)
 
+var groupedHandlers = make(map[string][]HandlerInfo)
+
 func parseDocs() error {
-	for _, app := range apps {
-		err := filepath.Walk("../"+app, func(path string, info os.FileInfo, err error) error {
+	for _, app := range core.APPS {
+		err := filepath.Walk(app, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -37,7 +45,13 @@ func parseDocs() error {
 			}
 			return nil
 		})
-		return err
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, handler := range handlers {
+		groupedHandlers[handler.Tag] = append(groupedHandlers[handler.Tag], *handler)
 	}
 	return nil
 }
@@ -62,37 +76,70 @@ func parseFile(path string) {
 				if len(parts) != 2 {
 					continue
 				}
-				fmt.Println("Parts:", parts)
+
 				key := strings.TrimSpace(parts[0])
 				value := strings.TrimSpace(parts[1])
+				key = strings.ToLower(key)
 
 				switch key {
 				case "name":
-					handlerInfo.name = value
+					handlerInfo.Name = value
 				case "tag":
-					handlerInfo.tag = value
+					handlerInfo.Tag = value
 				case "path":
-					handlerInfo.path = value
+					handlerInfo.Path = value
 				case "method":
-					handlerInfo.method = value
+					for _, method := range core.ALLOWED_METHODS {
+						if value == method {
+							handlerInfo.Method = value
+							break
+						}
+					}
 				case "summary":
-					handlerInfo.summary = value
+					handlerInfo.Summary = value
 				case "description":
-					handlerInfo.description = value
-				case "isAuth":
-					handlerInfo.isAuth = value
+					handlerInfo.Description = value
+				case "isauth":
+					if value == "true" || value == "false" {
+						handlerInfo.IsAuth = value
+					}
+				case "req_content_type":
+					for _, contentType := range core.SUPPORTED_MEDIA_TYPES {
+						if value == contentType {
+							handlerInfo.ReqContentTypes = append(handlerInfo.ReqContentTypes, value)
+							break
+						}
+					}
+				case "req_content_types":
+					for _, ct := range strings.Split(value, ",") {
+						ct = strings.TrimSpace(ct)
+						for _, contentType := range core.SUPPORTED_MEDIA_TYPES {
+							if ct == contentType {
+								handlerInfo.ReqContentTypes = append(handlerInfo.ReqContentTypes, ct)
+							}
+						}
+					}
 				case "requestbody":
-					handlerInfo.requestbody = value
+					lines := strings.Split(value, "\n")
+					for _, line := range lines {
+						trimmedLine := strings.TrimPrefix(line, "	")
+						handlerInfo.RequestBody += trimmedLine + "\n"
+					}
+				case "resp_content_type":
+					handlerInfo.RespContentType = value
 				case "responsebody":
-					handlerInfo.responsebody = value
+					lines := strings.Split(value, "\n")
+					for _, line := range lines {
+						trimmedLine := strings.TrimPrefix(line, "	")
+						handlerInfo.ResponseBody += trimmedLine + "\n"
+					}
 				}
 
-				if handlerInfo.name != "" && handlerInfo.path != "" && handlerInfo.method != "" {
-					if _, ok := handlers[handlerInfo.name]; ok {
-						fmt.Println("Handler already exists", handlerInfo.name)
+				if handlerInfo.Name != "" && handlerInfo.Path != "" && handlerInfo.Method != "" {
+					if _, ok := handlers[handlerInfo.Name]; ok {
 						continue
 					}
-					handlers[handlerInfo.name] = handlerInfo
+					handlers[handlerInfo.Name] = handlerInfo
 				}
 			}
 		}
@@ -100,11 +147,37 @@ func parseFile(path string) {
 	return
 }
 
-func main() {
+func GenerateDocs() error {
 	err := parseDocs()
 	if err != nil {
-		fmt.Println("Error parsing docs", err)
-		return
+		return err
 	}
-	fmt.Println("Handlers:", handlers)
+
+	funcMap := template.FuncMap{
+		"lower": strings.ToLower,
+	}
+
+	tmpl, err := template.New("template.html").Funcs(funcMap).ParseFiles("docs/templates/html/template.html")
+	if err != nil {
+		return err
+	}
+
+	data := PageData{
+		CSSPath:  "docs/templates/css/styles.css",
+		JSPath:   "docs/templates/js/script.js",
+		Handlers: groupedHandlers,
+	}
+
+	f, err := os.Create("docs/docs.html")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	err = tmpl.Execute(f, data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

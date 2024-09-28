@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -20,7 +19,6 @@ func isAllowedHostMiddleware(clientAddr string) bool {
 		host = clientAddr
 	}
 
-	fmt.Println("Host:", host)
 	for _, allowedHost := range ALLOWED_HOSTS {
 		if host == allowedHost {
 			return true
