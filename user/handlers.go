@@ -117,7 +117,7 @@ docs(
 	summary: Create a new user with form data;
 	description: Create a new user with the given data and images;
 	isAuth: false;
-	req_content_types: application/json, multipart/form-data;
+	req_content_type: multipart/form-data;
 	requestbody: {
 		"name": "string",
 		"surname": "string",

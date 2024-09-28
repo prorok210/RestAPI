@@ -43,36 +43,60 @@
                     <p><strong>Description:</strong> {{.Description}}</p>
 
                     {{if .RequestBody}}
-                    <h4>Request body:</h4>
-                    <div class="code-block">
-                        <pre>{{.RequestBody}}</pre>
-                    </div>
-                    {{end}}
 
-                    <button class="try-it-out {{.Method | lower}}">Try it out</button>
-
-                    <form id="request-form-{{.Name}}" class="request-form">
+                    <div class="type-selection">
+                        <h4>Request body:</h4>
                         <label for="content-type-{{.Name}}">Select Content Type:</label>
                         <select id="content-type-{{.Name}}" name="content-type">
                             {{range .ReqContentTypes}}
                             <option value="{{.}}">{{.}}</option>
                             {{end}}
                         </select><br>
-                        {{if .RequestBody}}
-                        <div id="json-input-{{.Name}}" class="input-field">
-                            <textarea id="json-body-{{.Name}}" name="json-body" placeholder='{{.RequestBody}}'
-                                required>{{.RequestBody}}</textarea><br>
-                        </div>
-                        {{end}}
+                    </div>
+                    {{end}}
 
-                        <button type="submit" class="submit-button {{.Method | lower}}">Execute</button>
-                    </form>
+                    <button class="try-it-out {{.Method | lower}}">Try it out</button>
+
+                    {{if .RequestBody}}
+
+                    <div class="example-value">
+                        <p>Example value</p>
+                        <div class="code-block">
+                            <pre>{{.RequestBody}}</pre>
+                        </div>
+                    </div>
+
+                    {{end}}
+
+
+                    <div class="try-it" style="display: none;">
+                        <button class="return-from-try">Cancel</button>
+                        <form id="request-form-{{.Name}}" class="request-form">
+
+                            {{if .RequestBody}}
+
+                            <div id="json-input-{{.Name}}" class="input-field">
+                                <textarea id="json-body-{{.Name}}" name="json-body" placeholder='{{.RequestBody}}'
+                                    required>{{.RequestBody}}</textarea><br>
+                            </div>
+
+                            {{end}}
+
+                            <button type="submit" class="submit-button {{.Method | lower}}">Execute</button>
+                        </form>
+
+                    </div>
 
                     {{if .ResponseBody}}
-                    <h4>Response body:</h4>
-                    <div class="code-block">
-                        <pre>{{.ResponseBody}}</pre>
+
+                    <div class="response">
+                        <h4>Response: {{.RespContentType}}</h4>
+                        <p>Example value</p>
+                        <div class="code-block">
+                            <pre>{{.ResponseBody}}</pre>
+                        </div>
                     </div>
+
                     {{end}}
                 </div>
             </div>
