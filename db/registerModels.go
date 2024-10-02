@@ -8,9 +8,6 @@ var (
 			Регистрация таблиц
 			"<tablename>":    reflect.TypeOf(<ModelStructName>{TableName: "<tablename>"}),
 		*/
-		"users":  reflect.TypeOf(User{TableName: "users"}),
-		"tokens": reflect.TypeOf(Token{TableName: "tokens"}),
-		"images": reflect.TypeOf(Image{}),
 	}
 
 	TypeMap = map[string]reflect.Type{
@@ -18,9 +15,11 @@ var (
 			Регистрация типов
 			"<tablename>":   reflect.TypeOf((*<ModelStructName>)(nil)).Elem(),
 		*/
-		"users":  reflect.TypeOf((*User)(nil)).Elem(),
-		"tokens": reflect.TypeOf((*Token)(nil)).Elem(),
-		"images": reflect.TypeOf((*Image)(nil)).Elem(),
+	}
+	ContstructMap = map[string]func(string) interface{}{
+		/*
+			Регистрация конструкторов
+			"<tablename>":   New<ModelStructName>, */
 	}
 )
 
