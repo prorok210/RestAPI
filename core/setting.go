@@ -76,8 +76,8 @@ var SUPPORTED_MEDIA_TYPES = []string{
 var (
 	JWT_ACCESS_SECRET_KEY       string
 	JWT_REFRESH_SECRET_KEY      string
-	JWT_ACCESS_EXPIRATION_TIME  time.Duration = 24 * time.Hour
-	JWT_REFRESH_EXPIRATION_TIME time.Duration = 336 * time.Hour
+	JWT_ACCESS_EXPIRATION_TIME  time.Duration = time.Hour * 24
+	JWT_REFRESH_EXPIRATION_TIME time.Duration = time.Hour * 336
 )
 
 /*

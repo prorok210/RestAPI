@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       header.addEventListener("click", () => {
         if (info) {
-          console.log(info.style.display);
           info.style.display =
             info.style.display === "none" || info.style.display === ""
               ? "block"
@@ -15,19 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
-
-  //   document.querySelectorAll(".try-it-out").forEach((button) => {
-  //     button.addEventListener("click", (event) => {
-  //       event.stopPropagation();
-  //       const form = button.nextElementSibling;
-  //       if (form) {
-  //         form.style.display =
-  //           form.style.display === "none" || form.style.display === ""
-  //             ? "block"
-  //             : "none";
-  //       }
-  //     });
-  //   });
 
   document.querySelectorAll(".try-it-out").forEach((button) => {
     button.addEventListener("click", () => {
@@ -58,6 +44,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  function toggleInputFields(handlerName) {
+    const selectElement = document.getElementById(
+      `content-type-${handlerName}`
+    );
+    const jsonInput = document.getElementById(`json-input-${handlerName}`);
+    const formDataInput = document.getElementById(
+      `form-data-input-${handlerName}`
+    );
+
+    if (selectElement.value === "application/json") {
+      jsonInput.style.display = "block";
+      formDataInput.style.display = "none";
+    } else if (selectElement.value === "application/x-www-form-urlencoded") {
+      jsonInput.style.display = "none";
+      formDataInput.style.display = "block";
+    }
+  }
 
   // Работа с формами
   const forms = document.querySelectorAll(".request-form");

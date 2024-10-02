@@ -20,6 +20,7 @@ type HandlerInfo struct {
 	Description     string
 	IsAuth          string
 	RequestBody     string
+	FormDataBody    map[string]string
 	ResponseBody    string
 }
 
@@ -71,6 +72,8 @@ func parseFile(path string) {
 	for _, match := range matches {
 		if len(match) > 1 {
 			handlerInfo := new(HandlerInfo)
+			jsonIn := false
+			formDataIn := false
 			for _, m := range strings.Split(match[1], ";") {
 				parts := strings.SplitN(m, ":", 2)
 				if len(parts) != 2 {
@@ -104,10 +107,21 @@ func parseFile(path string) {
 						handlerInfo.IsAuth = value
 					}
 				case "req_content_type":
-					for _, contentType := range core.SUPPORTED_MEDIA_TYPES {
-						if value == contentType {
-							handlerInfo.ReqContentTypes = append(handlerInfo.ReqContentTypes, value)
-							break
+					for _, ct := range strings.Split(value, ",") {
+						ct = strings.TrimSpace(ct)
+						for _, contentType := range core.SUPPORTED_MEDIA_TYPES {
+							if ct == contentType {
+								handlerInfo.ReqContentTypes = append(handlerInfo.ReqContentTypes, ct)
+								if ct == "application/json" {
+									jsonIn = true
+								}
+								if ct == "multipart/form-data" {
+									formDataIn = true
+								}
+								if ct == "application/x-www-form-urlencoded" {
+									formDataIn = true
+								}
+							}
 						}
 					}
 				case "req_content_types":
@@ -116,14 +130,40 @@ func parseFile(path string) {
 						for _, contentType := range core.SUPPORTED_MEDIA_TYPES {
 							if ct == contentType {
 								handlerInfo.ReqContentTypes = append(handlerInfo.ReqContentTypes, ct)
+								if ct == "application/json" {
+									jsonIn = true
+								}
+								if ct == "multipart/form-data" {
+									formDataIn = true
+								}
+								if ct == "application/x-www-form-urlencoded" {
+									formDataIn = true
+								}
 							}
 						}
 					}
 				case "requestbody":
-					lines := strings.Split(value, "\n")
-					for _, line := range lines {
-						trimmedLine := strings.TrimPrefix(line, "	")
-						handlerInfo.RequestBody += trimmedLine + "\n"
+					if jsonIn {
+						lines := strings.Split(value, "\n")
+						for _, line := range lines {
+							trimmedLine := strings.TrimPrefix(line, "	")
+							handlerInfo.RequestBody += trimmedLine + "\n"
+						}
+					}
+					if formDataIn {
+						reg := regexp.MustCompile(`\{([^}]*)\}`)
+						matches := reg.FindStringSubmatch(value)
+						if len(matches) == 1 {
+							handlerInfo.FormDataBody = make(map[string]string)
+							lines := strings.Split(value, "\n")
+							for _, line := range lines {
+								trimmedLine := strings.TrimPrefix(line, "	")
+								parts := strings.Split(trimmedLine, ":")
+								if len(parts) == 2 {
+									handlerInfo.FormDataBody[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+								}
+							}
+						}
 					}
 				case "resp_content_type":
 					handlerInfo.RespContentType = value
@@ -141,6 +181,15 @@ func parseFile(path string) {
 					}
 					handlers[handlerInfo.Name] = handlerInfo
 				}
+
+				for _, handler := range handlers {
+					if handler.Tag == "" {
+						handler.Tag = "Others"
+					}
+				}
+
+				jsonIn = false
+				formDataIn = false
 			}
 		}
 	}

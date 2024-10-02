@@ -42,22 +42,25 @@
                     <p><strong>Summary:</strong> {{.Summary}}</p>
                     <p><strong>Description:</strong> {{.Description}}</p>
 
-                    {{if .RequestBody}}
+                    {{if .ReqContentTypes}}
 
                     <div class="type-selection">
                         <h4>Request body:</h4>
                         <label for="content-type-{{.Name}}">Select Content Type:</label>
-                        <select id="content-type-{{.Name}}" name="content-type">
+                        <select id="content-type-{{.Name}}" name="content-type"
+                            onchange="toggleInputFields('{{.Name}}')">
                             {{range .ReqContentTypes}}
                             <option value="{{.}}">{{.}}</option>
                             {{end}}
                         </select><br>
                     </div>
+
                     {{end}}
+
 
                     <button class="try-it-out {{.Method | lower}}">Try it out</button>
 
-                    {{if .RequestBody}}
+                    {{if or .RequestBody .FormDataBody}}
 
                     <div class="example-value">
                         <p>Example value</p>
@@ -68,16 +71,29 @@
 
                     {{end}}
 
-
-                    <div class="try-it" style="display: none;">
+                    <div class="try-it" style="display:none;">
                         <button class="return-from-try">Cancel</button>
                         <form id="request-form-{{.Name}}" class="request-form">
 
                             {{if .RequestBody}}
 
-                            <div id="json-input-{{.Name}}" class="input-field">
-                                <textarea id="json-body-{{.Name}}" name="json-body" placeholder='{{.RequestBody}}'
-                                    required>{{.RequestBody}}</textarea><br>
+                            <textarea id="json-body-{{.Name}}" name="json-body" placeholder='{{.RequestBody}}'
+                                required>{{.RequestBody}}</textarea><br>
+
+                            {{end}}
+
+                            {{if .FormDataBody}}
+
+                            <div id="form-data-input-{{.Name}}" class="input-field" style="display: none;">
+
+                                {{range $key, $value := .FormDataBody}}
+                                {{if eq $value "file"}}
+                                <input type="file" name="{{$key}}" required><br>
+                                {{else}}
+                                <input type="text" name="{{$key}}" placeholder="{{$value}}" required><br>
+                                {{end}}
+                                {{end}}
+
                             </div>
 
                             {{end}}
