@@ -19,7 +19,11 @@ func main() {
 		log.Println("Error initializing environment", er)
 		return
 	}
-
+	er = db.Register()
+	if er != nil {
+		log.Println("Error registering models", er)
+		return
+	}
 	er = orm.InitDB()
 	if er != nil {
 		log.Println("Error inittializing DB", er)
@@ -33,9 +37,6 @@ func main() {
 		log.Println("Error starting server", er)
 		return
 	}
-
-	users := db.TableUsers{BaseTable{TableName: "users"}}
-	users.GetAll()
 
 	select {}
 }

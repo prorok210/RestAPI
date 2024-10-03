@@ -1,20 +1,17 @@
 package db
 
-// Base Table structure
-type BaseTable struct {
-	TableName string
-}
+import "RestAPI/orm"
 
 type TableUsers struct {
-	BaseTable
+	orm.BaseTable
 }
 
 type TableTokens struct {
-	BaseTable
+	orm.BaseTable
 }
 
 type TableImages struct {
-	BaseTable
+	orm.BaseTable
 }
 
 // Create our models here

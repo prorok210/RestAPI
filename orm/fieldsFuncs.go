@@ -1,7 +1,6 @@
 package orm
 
 import (
-	"RestAPI/db"
 	"context"
 	"fmt"
 	"reflect"
@@ -12,7 +11,7 @@ import (
 func Create(obj interface{}) error {
 	fmt.Println("CREATE", obj)
 	// Getting the fields and their values
-	values, columns := db.ExtractFields(obj)
+	values, columns := ExtractFields(obj)
 	// Removing a column "TableName" and Id
 	columns = columns[2:]
 	// Getting the table name and delete it from the list of value
@@ -42,7 +41,7 @@ func Create(obj interface{}) error {
 // Function for updating information in the database
 func Update(obj interface{}) error {
 	// get all the fields of the structure and their values
-	values, columns := db.ExtractFields(obj)
+	values, columns := ExtractFields(obj)
 	fmt.Println(values, columns)
 	// Removing a column "TableName" and "ID"
 	columns = columns[2:]
@@ -76,7 +75,7 @@ func Update(obj interface{}) error {
 
 // converts an object to a type from typeMap
 func convertObject(obj interface{}, tableName string) (interface{}, error) {
-	newType, ok := db.TypeMap[tableName]
+	newType, ok := TableTypeMap[tableName]
 	if !ok {
 		return nil, fmt.Errorf("type %s not found in typeMap", tableName)
 	}

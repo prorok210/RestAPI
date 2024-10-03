@@ -2,7 +2,6 @@ package orm
 
 import (
 	"RestAPI/core"
-	"RestAPI/db"
 	"context"
 	"database/sql"
 	"fmt"
@@ -111,7 +110,7 @@ func CreateTable(obj interface{}) error {
 
 // Function for checking the similarity of tables in database and structures
 func CheckTables() error {
-	for tableName, modelType := range db.TableRegistry {
+	for tableName, modelType := range TableTypeMap {
 		fmt.Printf("Checking table %s...\n", tableName)
 		fmt.Println("modelType", modelType)
 

@@ -1,15 +1,10 @@
 package orm
 
 import (
-	"RestAPI/db"
 	"context"
 	"fmt"
 	"reflect"
 )
-
-type BaseTable struct {
-	db.BaseTable
-}
 
 // Function to get all values ​​from the database
 func (table *BaseTable) GetAll() error {
@@ -51,21 +46,15 @@ func (table *BaseTable) GetAll() error {
 }
 
 // Fabric function to create objects based on TableName
-func (table *BaseTable) newModel(fields map[string]interface{}) (BaseCell, error) {
-	if modelType, ok := db.TableRegistry[table.TableName]; ok {
+func (table *BaseTable) newModel(fields map[string]interface{}) (interface{}, error) {
+	if modelType, ok := TableTypeMap[table.TableName]; ok {
 		// Creating a new instance of the desired type
-		modelValue := reflect.New(modelType).Elem()
+		model := reflect.New(modelType).Elem()
 
 		// Setting the value of the TableName field using reflection
-		tableNameField := modelValue.FieldByName("TableName")
+		tableNameField := model.FieldByName("TableName")
 		if tableNameField.IsValid() && tableNameField.CanSet() {
 			tableNameField.SetString(table.TableName)
-		}
-		// Reducing to the BaseCell interface
-		model := modelValue.Addr().Interface().(BaseCell)
-
-		if model == nil {
-			return nil, fmt.Errorf("model is nil")
 		}
 
 		// Filling the model with data from fields
