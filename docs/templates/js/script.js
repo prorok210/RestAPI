@@ -1,10 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
+  console.log(
+    "Количество .try-it-out элементов:",
+    document.querySelectorAll(".try-it-out")
+  );
+  const list = document.querySelectorAll(".try-it-out");
   document.querySelectorAll("section").forEach((section) => {
     section.querySelectorAll(".route-block").forEach((block) => {
       const header = block.querySelector(".route-header");
       const info = block.querySelector(".route-info");
+      console.log(block, "---------------");
 
       header.addEventListener("click", () => {
+        console.log(block);
+
         if (info) {
           info.style.display =
             info.style.display === "none" || info.style.display === ""
@@ -12,24 +20,38 @@ document.addEventListener("DOMContentLoaded", () => {
               : "none";
         }
       });
+      // info.querySelectorAll(".type-selection select").forEach((select) => {
+      //   const handlerName = select.id.replace("content-type-", "");
+      //   console.log(handlerName);
+      //   toggleInputFields(handlerName);
+      // });
     });
   });
+  console.log("Количество .try-it-out элементов:", list);
 
-  document.querySelectorAll(".try-it-out").forEach((button) => {
-    button.addEventListener("click", () => {
-      const routeInfo = button.closest(".route-info");
-      const exampleValue = routeInfo.querySelector(".example-value");
-      const tryIt = routeInfo.querySelector(".try-it");
+  try {
+    list.forEach((button) => {
+      console.log(button, "sadsa");
+      button.addEventListener("click", () => {
+        console.log(button, "sadsa");
+        const routeInfo = button.closest(".route-info");
+        const exampleValue = routeInfo.querySelector(".example-value");
+        const tryIt = routeInfo.querySelector(".try-it");
 
-      if (tryIt) {
-        if (exampleValue) {
-          exampleValue.style.display = "none";
+        console.log(tryIt);
+
+        if (tryIt) {
+          if (exampleValue) {
+            exampleValue.style.display = "none";
+          }
+          button.style.display = "none";
+          tryIt.style.display = "block";
         }
-        button.style.display = "none";
-        tryIt.style.display = "block";
-      }
+      });
     });
-  });
+  } catch (err) {
+    console.error(err);
+  }
 
   document.querySelectorAll(".return-from-try").forEach((button) => {
     button.addEventListener("click", () => {
@@ -45,6 +67,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  document.querySelectorAll(".type-selection select").forEach((select) => {
+    select.value = select.options[0].value;
+
+    select.addEventListener("change", () => {
+      const handlerName = select.id.replace("content-type-", "");
+      console.log(handlerName);
+      toggleInputFields(handlerName);
+    });
+
+    const event = new Event("change");
+    select.dispatchEvent(event);
+  });
+
   function toggleInputFields(handlerName) {
     const selectElement = document.getElementById(
       `content-type-${handlerName}`
@@ -53,97 +88,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const formDataInput = document.getElementById(
       `form-data-input-${handlerName}`
     );
+    const jsonEx = document.querySelector(`.json-example-${handlerName}`);
+    const formDataEx = document.querySelector(
+      `.form-data-example-${handlerName}`
+    );
+    if (!selectElement) {
+      console.error(`Element #content-type-${handlerName} not found`);
+      return;
+    }
 
     if (selectElement.value === "application/json") {
       jsonInput.style.display = "block";
+      jsonEx.style.display = "block";
       formDataInput.style.display = "none";
-    } else if (selectElement.value === "application/x-www-form-urlencoded") {
+      formDataEx.style.display = "none";
+    } else if (
+      selectElement.value === "application/x-www-form-urlencoded" ||
+      selectElement.value === "multipart/form-data"
+    ) {
       jsonInput.style.display = "none";
-      formDataInput.style.display = "block";
+      jsonEx.style.display = "none";
+      formDataInput.style.display = "flex";
+      formDataEx.style.display = "block";
     }
   }
 
-  // Работа с формами
-  const forms = document.querySelectorAll(".request-form");
-
-  forms.forEach((form) => {
-    const contentTypeSelect = form.querySelector(`select[name="content-type"]`);
-    const jsonInput = form.querySelector(
-      `#json-input-${form.id.split("-")[2]}`
-    );
-    const formDataInput = form.querySelector(
-      `#form-data-input-${form.id.split("-")[2]}`
-    );
-
-    // Изначально показываем JSON и скрываем Form Data
-    jsonInput.style.display = "block";
-    formDataInput.style.display = "none";
-
-    // Обработка смены типа контента
-    contentTypeSelect.addEventListener("change", () => {
-      if (contentTypeSelect.value === "application/json") {
-        jsonInput.style.display = "block";
-        formDataInput.style.display = "none";
-      } else {
-        jsonInput.style.display = "none";
-        formDataInput.style.display = "block";
-      }
-    });
-
-    // Обработка отправки формы
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault(); // Предотвращение стандартной отправки формы
-
-      let requestBody;
-      const method = form
-        .querySelector('button[type="submit"]')
-        .classList.contains("post")
-        ? "POST"
-        : form
-            .querySelector('button[type="submit"]')
-            .classList.contains("delete")
-        ? "DELETE"
-        : form.querySelector('button[type="submit"]').classList.contains("get")
-        ? "GET"
-        : "GET";
-
-      const action = form.action; // URL для запроса
-
-      // Обработка JSON
-      if (contentTypeSelect.value === "application/json") {
-        requestBody = form.querySelector('textarea[name="json-body"]').value;
-      } else {
-        // Обработка Form Data
-        const formData = new FormData(form);
-        requestBody = formData; // Формат FormData
-      }
-
-      try {
-        const response = await fetch(action, {
-          method: method,
-          headers:
-            contentTypeSelect.value === "application/json"
-              ? {
-                  "Content-Type": "application/json",
-                }
-              : {},
-          body:
-            contentTypeSelect.value === "application/json"
-              ? requestBody
-              : requestBody, // Приведение JSON к строке
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseBody = await response.json();
-        console.log("Response:", responseBody);
-        alert("Response: " + JSON.stringify(responseBody, null, 2));
-      } catch (error) {
-        console.error("Error:", error);
-        alert("Error: " + error.message);
-      }
-    });
-  });
+  // window.toggleInputFields = toggleInputFields;
 });

@@ -117,7 +117,7 @@ docs(
 	summary: Create a new user with form data;
 	description: Create a new user with the given data and images;
 	isAuth: false;
-	req_content_type: multipart/form-data;
+	req_content_type: multipart/form-data, application/json;
 	requestbody: {
 		"name": "string",
 		"surname": "string",
@@ -228,3 +228,64 @@ func ImageHandler(request core.HttpRequest) core.HttpResponse {
 	response.SetHeader("Content-Type", "image/jpeg")
 	return response
 }
+
+/*
+docs(
+
+	name: Test;
+	tag: user;
+	path: /user/dasda;
+	method: POST;
+	summary: Create a new user with form data;
+	description: Create a new user with the given data and images;
+	isAuth: false;
+	req_content_type: multipart/form-data, application/json;
+	requestbody: {
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	};
+	resp_content_type: application/json;
+	responsebody: {
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	};
+
+)docs
+*/
+
+/*
+docs(
+
+	name: Test2;
+	tag: user;
+	path: /user/daedassda;
+	method: POST;
+	summary: Create a new user with form data;
+	description: Create a new user with the given data and images;
+	isAuth: false;
+	req_content_type: multipart/form-data, application/json;
+	requestbody: {
+		"img": "file",
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	};
+	resp_content_type: application/json;
+	responsebody: {
+		"name": "string",
+		"surname": "string",
+		"mobile": "string",
+		"email": "string",
+		"age": "int"
+	};
+
+)docs
+*/

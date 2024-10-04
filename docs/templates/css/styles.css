@@ -200,3 +200,41 @@ button.return-from-try {
   background-color: white;
   color: black;
 }
+
+.form-data-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.input-field {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.json-example,
+.form-data-example {
+  background-color: var(--text-area-color);
+  border: 1px solid #744f4f;
+  border-radius: 4px;
+  padding: 20px;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+  color: #e0e0e0;
+}
+
+.input-form-option {
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

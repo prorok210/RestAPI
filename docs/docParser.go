@@ -19,7 +19,7 @@ type HandlerInfo struct {
 	Summary         string
 	Description     string
 	IsAuth          string
-	RequestBody     string
+	JsonRequestBody string
 	FormDataBody    map[string]string
 	ResponseBody    string
 }
@@ -147,20 +147,22 @@ func parseFile(path string) {
 						lines := strings.Split(value, "\n")
 						for _, line := range lines {
 							trimmedLine := strings.TrimPrefix(line, "	")
-							handlerInfo.RequestBody += trimmedLine + "\n"
+							handlerInfo.JsonRequestBody += trimmedLine + "\n"
 						}
 					}
 					if formDataIn {
 						reg := regexp.MustCompile(`\{([^}]*)\}`)
 						matches := reg.FindStringSubmatch(value)
-						if len(matches) == 1 {
+						if len(matches) > 1 {
 							handlerInfo.FormDataBody = make(map[string]string)
 							lines := strings.Split(value, "\n")
 							for _, line := range lines {
 								trimmedLine := strings.TrimPrefix(line, "	")
 								parts := strings.Split(trimmedLine, ":")
 								if len(parts) == 2 {
-									handlerInfo.FormDataBody[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+									formatedKey := strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(parts[0]), `"`, ""), `,`, "")
+									formatedValue := strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(parts[1]), `"`, ""), `,`, "")
+									handlerInfo.FormDataBody[formatedKey] = formatedValue
 								}
 							}
 						}

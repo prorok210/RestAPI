@@ -21,8 +21,8 @@ var APPS = []string{
 const (
 	// Настройки сервера
 	HOST          string        = "localhost"
-	HTTP_PORT     int           = 8080
-	HTTPS_PORT    int           = 8443
+	HTTP_PORT     int           = 8082
+	HTTPS_PORT    int           = 8446
 	CERT_FILE     string        = "/home/user/etc/ssl/certs/dev.crt"
 	KEY_FILE      string        = "/home/user/etc/ssl/private/dev.key"
 	CONN_TIMEOUT  time.Duration = 20
