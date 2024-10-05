@@ -1,6 +1,7 @@
 package app
 
 import (
+	"RestAPI/chats"
 	"RestAPI/docs"
 	"RestAPI/user"
 )
@@ -20,4 +21,5 @@ func InitHandlers() {
 	registerHandler("/createUser", user.CreateUserHandler, "createUser")
 	registerHandler("/verifyUser", user.VerifyUserHandler, "verifyUser")
 	registerHandler("/createUserForm", user.CreateUserFormdataHandler, "createUserForm")
+	registerHandler("/chats", chats.GetChat, "GetChat")
 }

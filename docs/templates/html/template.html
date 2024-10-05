@@ -85,7 +85,7 @@
 
                         <div class="try-it" style="display:none;">
                             <button class="return-from-try">Cancel</button>
-                            <form id="request-form-{{.Name}}" class="request-form">
+                            <form id="request-form-{{.Name}}" class="request-form" data-url="{{.Path}}">
 
                                 {{if .JsonRequestBody}}
 
@@ -113,25 +113,36 @@
                                         {{end}}
 
                                     </div>
+
                                     {{end}}
+
 
                                 </div>
 
                                 {{end}}
 
                                 <button type="submit" class="submit-button {{.Method | lower}}">Execute</button>
+                                <button type="button" class="back-button" style="display: none;">Back</button>
                             </form>
+
+
 
                         </div>
 
                         {{if .ResponseBody}}
 
                         <div class="response">
-                            <h4>Response: {{.RespContentType}}</h4>
-                            <p>Example value</p>
-                            <div class="code-block">
-                                <pre>{{.ResponseBody}}</pre>
+                            <h4>Response: </h4>
+                            <div class="example-response">
+                                <p>Example value: {{.RespContentType}}</p>
+                                <div class="code-block">
+                                    <pre>{{.ResponseBody}}</pre>
+                                </div>
                             </div>
+                            <div class="response-result" , style="display:none;">
+
+                            </div>
+
                         </div>
 
                         {{end}}

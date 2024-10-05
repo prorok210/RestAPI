@@ -20,7 +20,13 @@ h1,
 h2,
 h3,
 h4 {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-top: 20px;
   color: #333;
+}
+h4 {
+  font-weight: 600;
 }
 section {
   margin-bottom: 20px;
@@ -150,6 +156,9 @@ button.try-it-out.patch {
 .request-form {
   display: block;
   margin-top: 10px;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
 }
 .submit-button {
   color: white;
@@ -237,4 +246,36 @@ button.return-from-try {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.response-result {
+  margin-top: 20px;
+}
+
+.response-result pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.request-url {
+  background-color: var(--text-area-color);
+  border: 1px solid #744f4f;
+  border-radius: 4px;
+  padding: 20px;
+  overflow-x: auto;
+  max-height: auto;
+  overflow-y: auto;
+  color: #e0e0e0;
+}
+
+.response-headers {
+  background-color: var(--text-area-color);
+  border: 1px solid #744f4f;
+  border-radius: 4px;
+  padding: 20px;
+  overflow-x: auto;
+  max-height: auto;
+  overflow-y: auto;
+  color: #e0e0e0;
 }

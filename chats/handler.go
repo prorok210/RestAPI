@@ -12,11 +12,6 @@ docs(
 	summary: Verify user;
 	description: Verify user with the given data;
 	isAuth: false;
-	req_content_types: application/json, multipart/form-data;
-	requestbody: {
-		"mobile": "string",
-		"otp": "string"
-	};
 	resp_content_type: application/json;
 	responsebody: {
 		"Message": "User verified"

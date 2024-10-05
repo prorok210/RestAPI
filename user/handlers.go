@@ -112,7 +112,7 @@ docs(
 
 	name: CreateUserFormdataHandler;
 	tag: user;
-	path: /user/createformdata;
+	path: /createUserForm;
 	method: POST;
 	summary: Create a new user with form data;
 	description: Create a new user with the given data and images;
@@ -124,6 +124,7 @@ docs(
 		"mobile": "string",
 		"email": "string",
 		"age": "int"
+		"images": "file"
 	};
 	resp_content_type: application/json;
 	responsebody: {
@@ -239,7 +240,7 @@ docs(
 	summary: Create a new user with form data;
 	description: Create a new user with the given data and images;
 	isAuth: false;
-	req_content_type: multipart/form-data, application/json;
+	req_content_type: multipart/form-data, application/json, application/x-www-form-urlencoded;
 	requestbody: {
 		"name": "string",
 		"surname": "string",
