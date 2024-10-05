@@ -151,7 +151,7 @@ func CreateUserFormdataHandler(request core.HttpRequest) core.HttpResponse {
 
 	age, err := strconv.Atoi(request.FormData.Fields["age"])
 	if err != nil {
-		fmt.Println("Ошибка при конвертации возраста:", err)
+		log.Println("Age convertation error:", err)
 		return core.HTTP400
 	}
 	user.Age = age
@@ -185,14 +185,14 @@ func CreateUserFormdataHandler(request core.HttpRequest) core.HttpResponse {
 	for _, fileData := range request.FormData.Files["images"] {
 		er := saveFile(fileData.FileName, fileData.FileData)
 		if er != nil {
-			fmt.Println("Error saving file:", er)
+			log.Println("Error saving file:", er)
 			return core.HTTP500
 		}
 	}
 
 	jsonData, err := json.Marshal(user)
 	if err != nil {
-		fmt.Println("Error marshaling user:", err)
+		log.Println("Error marshaling user:", err)
 		return core.HTTP500
 	}
 	response := core.HTTP201
@@ -207,7 +207,7 @@ func ImageHandler(request core.HttpRequest) core.HttpResponse {
 
 	currentDir, er := os.Getwd()
 	if er != nil {
-		fmt.Println("Error getting current directory:", er)
+		log.Println("Error getting current directory:", er)
 		return core.HTTP500
 	}
 
@@ -220,7 +220,7 @@ func ImageHandler(request core.HttpRequest) core.HttpResponse {
 
 	fileData, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		log.Println("Error reading file:", err)
 		return core.HTTP500
 	}
 

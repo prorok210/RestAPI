@@ -40,9 +40,12 @@
                     </div>
 
                     <div class="route-info">
+                        {{if .Summary}}
                         <p><strong>Summary:</strong> {{.Summary}}</p>
+                        {{end}}
+                        {{if .Description}}
                         <p><strong>Description:</strong> {{.Description}}</p>
-
+                        {{end}}
                         {{if .ReqContentTypes}}
 
                         <div class="type-selection">

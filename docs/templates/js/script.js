@@ -42,10 +42,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const routeInfo = tryIt.closest(".route-info");
       const exampleValue = routeInfo.querySelector(".example-value");
       const tryButton = routeInfo.querySelector(".try-it-out");
+      const responseBlock = routeInfo.querySelector(".response");
       if (tryIt) {
         tryIt.style.display = "none";
         tryButton.style.display = "block";
         if (exampleValue) exampleValue.style.display = "block";
+        if (responseBlock) {
+          const responseExample =
+            responseBlock.querySelector(".example-response");
+          const responseResult =
+            responseBlock.querySelector(".response-result");
+          if (responseExample) responseExample.style.display = "block";
+          if (responseResult) responseResult.style.display = "none";
+        }
       }
     });
   });
