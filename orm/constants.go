@@ -1,15 +1,12 @@
 package orm
 
 import (
-	"RestAPI/core"
-
 	"github.com/jackc/pgx/v5"
 )
 
-// Connection to the database
+// Подключение к базе данных
 var (
-	conData = core.CONNECTIONDATA
-	conn    *pgx.Conn
+	conn *pgx.Conn
 
 	tagToSqlType = map[string]string{
 		"varchar":            "character varying",

@@ -19,7 +19,7 @@ func InitDB() error {
 		return fmt.Errorf("database connect error: %v", InitDBError)
 	}
 
-	// checking tables for compliance with structures
+	// Проверка наличия таблиц в базе данных и их соответствия моделям
 	err := CheckTables()
 	if err != nil {
 		return fmt.Errorf("error checking tables: %v", err)
@@ -33,9 +33,10 @@ func InitDB() error {
 func CreateTable(tableName string, obj interface{}) error {
 	data := reflect.TypeOf(obj)
 
-	// Checking a table exists or not
+	// Проверка на то, что таблица уже существует
 	var exists bool
 
+	// Делаем пробный запрос к БД
 	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
 	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
 
@@ -43,43 +44,43 @@ func CreateTable(tableName string, obj interface{}) error {
 		return fmt.Errorf("error checking table existence: %v", err)
 	}
 
+	// Если получили ответ, значит, таблица уже существует
 	if exists {
 		fmt.Printf("Table %s already exists.", tableName)
 		return nil
 	}
 
+	// Начало SQL-запроса для создания таблицы
 	sqlQuery := "CREATE TABLE IF NOT EXISTS " + tableName + " ("
 
 	for i := 0; i < data.NumField(); i++ {
 		field := data.Field(i)
+		// Поля TableName в БД не существует
 		if field.Name == "TableName" {
 			continue
 		}
+		// Парсим тег orm, который описывает поле таблицы в БДы
 		ormTag := field.Tag.Get("orm")
 		ormTag = strings.Replace(ormTag, "_", " ", -1)
 		if ormTag == "" {
 			return fmt.Errorf("field %s does not have a tag", field.Name)
 		} else if strings.Contains(ormTag, "ref") {
-			// Looking for the index of the substring "ref"
+			// Поиск начала подстроки ref
 			start := strings.Index(ormTag, "ref")
 
-			// Getting the substring from the index to the end of the string
+			// Т,к ref идет в конце, берем подстроку от ref до конца строки
 			match := ormTag[start:]
-			// Removing the substring from the tag
+			// Удаляем ref из ormTag
 			ormTag = strings.Replace(ormTag, " "+match, "", -1)
-			// Add the field name and value from the orm tag with reference
-			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ", "
+			// Создаем sql-запрос с внешним ключом
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", " + "FOREIGN KEY (" + strings.ToLower(field.Name) + ") REFERENCES " + strings.TrimPrefix(match, "ref ") + ");"
 		} else {
-			// Add the field name and value from the orm tag with reference
-			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ", "
+			// Создаем sql-запрос
+			sqlQuery += strings.ToLower(field.Name) + " " + ormTag + ");"
 		}
 	}
-	// Remove the last comma and space
-	sqlQuery = strings.TrimSuffix(sqlQuery, ", ")
-	sqlQuery += ");"
 
-	fmt.Println(sqlQuery)
-
+	// Делаем запрос к БД на создание таблицы
 	_, err = conn.Exec(context.Background(), sqlQuery)
 	if err != nil {
 		return fmt.Errorf("error creating table %s", err)
@@ -89,12 +90,12 @@ func CreateTable(tableName string, obj interface{}) error {
 	return nil
 }
 
-// Function for checking the similarity of tables in database and structures
+// Функция проверки соответствия таблиц в базе данных и моделей
 func CheckTables() error {
 	for tableName, modelType := range TypeTable {
 		fmt.Printf("Checking table %s...\n", tableName)
 
-		// Getting the current table structure from the database
+		// Получение текущей структуры таблицы из базы данных
 		dbColumns, err := getTableColumns(tableName)
 
 		if err != nil {
@@ -102,7 +103,7 @@ func CheckTables() error {
 		}
 		// fmt.Println("dbColumns", dbColumns)
 
-		// Comparing the structure with the model
+		// Сравнение конструкции с моделью
 		modelColumns, err := getModelColumns(modelType)
 
 		if err != nil {
@@ -110,7 +111,7 @@ func CheckTables() error {
 		}
 		// fmt.Println("modelColumns", modelColumns)
 
-		// Column comparison
+		// Сравнение столбцов
 		ok, err := compareColumns(dbColumns, modelColumns)
 		if err != nil {
 			return fmt.Errorf("error comparing columns %s: %v", tableName, err)
@@ -125,9 +126,9 @@ func CheckTables() error {
 	return nil
 }
 
-// Getting a list of table columns from a database
+// Получение списка столбцов таблицы из базы данных
 func getTableColumns(tableName string) (map[string]map[string]string, error) {
-	// use service tables to get column data
+	// использование служебных таблиц для получения метаданных столбца
 	query := fmt.Sprintf(`
 	SELECT
     	c.column_name,
@@ -180,12 +181,13 @@ func getTableColumns(tableName string) (map[string]map[string]string, error) {
 	return columns, nil
 }
 
-// Getting a list of fields from a structure
+// Получение данных об атрибутах модели
 func getModelColumns(modelType reflect.Type) (map[string]map[string]string, error) {
 	columns := map[string]map[string]string{}
 
 	for i := 0; i < modelType.NumField(); i++ {
 		field := modelType.Field(i)
+		// Дефолтные значения
 		columns[strings.ToLower(field.Name)] = map[string]string{
 			"column_name":     strings.ToLower(field.Name),
 			"data_type":       "",
@@ -200,41 +202,46 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 
 		column := columns[strings.ToLower(field.Name)]
 
-		// Get orm tags
 		ormTag := strings.ToLower(field.Tag.Get("orm"))
 		if ormTag != "" {
-			// every attribute is separated by a space
 			ormTagSlice := strings.Split(ormTag, " ")
-			// first attribute is the type. Translating attributes into sql text
+			// Первый атрибут - всегда тип. Т,к SQL свои типы, нужно их привести к общему через tagToSqlType. Его нужно дополнять
 			value, ok := tagToSqlType[ormTagSlice[0]]
 			if !ok {
+				if ormTagSlice[0] == "string" {
+					return nil, fmt.Errorf("unknown type %s. May be you meant varchar?", ormTagSlice[0])
+				}
 				return nil, fmt.Errorf("unknown type %s. You can add it in tagToSqlType in constants.go", ormTagSlice[0])
-			} else {
+			} else if ok {
 				column["data_type"] = value
 			}
-			// Filling the column with data
-			if Contains(ormTagSlice, "serial_primary_key") {
+			// Заполняем поля в зависимости от тегов
+			if contains(ormTagSlice, "serial_primary_key") {
+				// Если есть тег serial_primary_key, то это первичный ключ, он является идентификатором и ненулевой
 				column["constraint_type"] = "PRIMARY KEY"
 				column["is_identity"] = "true"
 				column["is_nullable"] = "NO"
 			}
-			if Contains(ormTagSlice, "ref") {
+			if contains(ormTagSlice, "ref") {
+				// Если есть тег ref, то это внешний ключ, он является идентификатором, но может быть нулевым (забавно, но sql возвращает именно так)
 				column["constraint_type"] = "FOREIGN KEY"
 				column["is_identity"] = "true"
-				if Contains(ormTagSlice, "on_update") {
-					updateRule := find_rule(ormTag, "on_update")
+				// Далее идет добавление правил обновления и удаления
+				if contains(ormTagSlice, "on_update") {
+					updateRule := findRule(ormTag, "on_update")
 					column["update_rule"] = updateRule
 				}
-				if Contains(ormTagSlice, "on_delete") {
+				if contains(ormTagSlice, "on_delete") {
 					fmt.Println("on_delete contains")
-					deleteRule := find_rule(ormTag, "on_delete")
+					deleteRule := findRule(ormTag, "on_delete")
 					column["delete_rule"] = deleteRule
 				}
 			}
-			if Contains(ormTagSlice, "not_null") {
+			// Затем добавляем остальные поля. Всё приводим к формату, который возвращает SQL для сравнения модели и таблицы
+			if contains(ormTagSlice, "not_null") {
 				column["is_nullable"] = "NO"
 			}
-			if Contains(ormTagSlice, "unique") {
+			if contains(ormTagSlice, "unique") {
 				column["constraint_type"] = "UNIQUE"
 			}
 
@@ -247,24 +254,46 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 	return columns, nil
 }
 
-// Comparing two map of columns
+func contains(slice []string, input string) bool {
+	for _, str := range slice {
+		if strings.Contains(str, input) {
+			return true
+		}
+	}
+	return false
+}
+
+func findRule(tag string, rule string) string {
+	// Найти правило (удаления или обновления) в теге
+	start := strings.Index(tag, rule)
+	end := start + strings.Index(tag[start:], " ")
+	// Если правило находится в конце строки т,е не был найден пробел т,к разделителями являются '_'
+	if end == start-1 {
+		end = len(tag)
+	}
+	result := strings.ToUpper(strings.Replace(tag[start:end], "_", " ", -1))
+	// Если не задано действие (Т,е есть слова ON UPDATE или ON DELETE, но нет действия по типу CASCADE, SET NULL и т.д)
+	if len(strings.Split(result, " ")) < 3 {
+		return ""
+	}
+	// Для случая, когда правило из нескольких слов. Например, NO ACTION или SET NULL
+	return strings.Join(strings.Split(result, " ")[2:], "")
+}
+
+// Сравнение характеристик таблиц в БД и модели
 func compareColumns(dbColumns, modelColumns map[string]map[string]string) (bool, error) {
-	// Checking the presence of all columns from the model in the database
+	// Проверка наличия всех столбцов таблицы в модели
 	for key, valueDb := range dbColumns {
-		if _, ok := modelColumns[key]; !ok {
+		valueModel, ok := modelColumns[key]
+		if !ok {
 			return false, fmt.Errorf("column %s not found in model", key)
 		}
 
-		// Checking the presence of all columns from the database in the model
-		if _, ok := dbColumns[key]; !ok {
-			return false, fmt.Errorf("column %s not found in database", key)
-		}
-
-		valueModel := modelColumns[key]
-		// Checking the similarity of the columns
+		// Проверка соответствия столбцов
 		for key, value := range valueDb {
+			// SQL возвращает то пустое значение, то NO ACTION
 			if key == "update_rule" || key == "delete_rule" {
-				if value == "NO ACTION" && valueModel[key] == "" {
+				if (value == "NO ACTION" || value == "") && (valueModel[key] == "" || valueModel[key] == "NO ACTION") {
 					continue
 				}
 			}
@@ -275,20 +304,4 @@ func compareColumns(dbColumns, modelColumns map[string]map[string]string) (bool,
 	}
 
 	return true, nil
-}
-
-func find_rule(tag string, rule string) string {
-	// find rule in tag
-	start := strings.Index(tag, rule)
-	end := start + strings.Index(tag[start:], " ")
-	// if end not found
-	if end == start-1 {
-		end = len(tag)
-	}
-	result := strings.ToUpper(strings.Replace(tag[start:end], "_", " ", -1))
-	// for SET NULL case
-	if len(strings.Split(result, " ")) < 3 {
-		return ""
-	}
-	return strings.Join(strings.Split(result, " ")[2:], "")
 }

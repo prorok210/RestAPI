@@ -32,12 +32,25 @@ func main() {
 	}
 
 	users := orm.BaseTable{TableName: "users"}
-	user, er := users.GetById(2)
+	users.GetAll()
+	userInterface, er := users.GetById(2)
 	if er != nil {
 		log.Println("Error getting user", er)
 		return
 	}
-	fmt.Println(user)
+	fmt.Println("USER", userInterface)
+	user, ok := userInterface.(db.User)
+	if !ok {
+		// Обработка ошибки, если значение не является db.User
+		panic("не удалось привести interface{} к db.User")
+	}
+	// user.Interface().(*db.User).Name = "Vasya"
+	er = orm.Update(user)
+	if er != nil {
+		log.Println("Error updating user", er)
+		return
+	}
+	fmt.Println("USER", user)
 
 	app.InitHandlers()
 

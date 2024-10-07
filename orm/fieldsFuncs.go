@@ -7,28 +7,35 @@ import (
 	"strings"
 )
 
-// Function for creating a new table object based on obj.TableName
+// Функция для создания нового объекта таблицы
 func Create(obj interface{}) error {
-	// Getting the fields and their values
-	values, columns := ExtractFields(obj)
-	// Removing a column "TableName" and Id
-	columns = columns[2:]
-	// Getting the table name and delete it from the list of value
-	tableName, values := values[0], values[2:]
-	// Create a SQL-string with column names
-	columnsStr := "(" + strings.Join(columns, ", ") + ")"
-
-	// Create a slice of placeholders
-	placeholders := make([]string, len(values))
+	// Получаем поля и их значения из модели
+	columns := extractFields(obj)
+	// Удаляем столбец "TableName" и "ID"
+	tableName := columns["TableName"].(string)
+	delete(columns, "TableName")
+	delete(columns, "ID")
+	values := make([]interface{}, 0, len(columns))
+	for _, value := range columns {
+		values = append(values, value)
+	}
+	// Создаем шаблон SQL-запроса, который будем подставлять вместо плейсхолдеров
+	columnsStr := "("
+	for key := range columns {
+		columnsStr += key + ", "
+	}
+	// Удаляем последнюю запятую и пробел и закрываем скобку
+	columnsStr = strings.TrimSuffix(columnsStr, ", ") + ")"
+	// Создаем слайс с плейсхолдерами
+	placeholders := make([]string, len(columns))
 	for i := range placeholders {
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
 	}
-	// Create a string with placeholders for values
+	// Создаем строку с плейсхолдерами, на место которых будем подставлять значения
 	placeholdersStr := "(" + strings.Join(placeholders, ", ") + ")"
-	// Create a SQL-string
+	// Создаем строку с SQL-запросом, подставляя название таблицы, столбцов и плейсхолдеры
 	insertSQL := fmt.Sprintf(`INSERT INTO %s %s VALUES %s;`, tableName, columnsStr, placeholdersStr)
-	// Send the request
-	fmt.Println(insertSQL)
+	// Выполняем запрос, подставляя значения в плейсхолдеры
 	_, err := conn.Exec(context.Background(), insertSQL, values...)
 	if err != nil {
 		return fmt.Errorf("row insertion error: %v", err)
@@ -37,33 +44,28 @@ func Create(obj interface{}) error {
 	return nil
 }
 
-// Function for updating information in the database
+// Функция для обновления объекта в БД
 func Update(obj interface{}) error {
-	// get all the fields of the structure and their values
-	values, columns := ExtractFields(obj)
-	fmt.Println(values, columns)
-	// Removing a column "TableName" and "ID"
-	columns = columns[2:]
-	// Getting the table name and delete it from the list of values
-	tableName, values := values[0], values[1:]
-	// Getting the obj ID
-	strID := fmt.Sprint(values[0])
-	// Removing the ID from the list of values
-	values = values[1:]
+	// Получаем все поля и их значения из модели. Ключ, название поля. По ключу доступно значение поля
+	columns := extractFields(obj)
+	tableName := columns["TableName"].(string)
+	strID := fmt.Sprint(columns["ID"])
+	// Удаляем столбец "TableName" и "ID"
+	delete(columns, "TableName")
+	delete(columns, "ID")
 
-	// Create a string with column names and values for SQL-query
+	// Создаем строку с обновляемыми данными в формате столбец = значение
 	updateData := ""
-	for i := range columns {
-		updateData += fmt.Sprintf(`%s = '%s', `, strings.ToLower(columns[i]), values[i])
+	for column, value := range columns {
+		updateData += fmt.Sprintf(`%s = '%s', `, strings.ToLower(column), value)
 	}
 
-	// Remove the last comma and space
+	// Удаляем последнюю запятую и пробел
 	updateData = strings.TrimSuffix(updateData, ", ")
 
 	insertSQL := fmt.Sprintf(`UPDATE %s SET %s WHERE id = %s;`, tableName, updateData, strID)
 
-	fmt.Println(insertSQL)
-	// Passing strings
+	// Выполняем запрос
 	_, err := conn.Exec(context.Background(), insertSQL)
 	if err != nil {
 		return fmt.Errorf("row update error: %v", err)
@@ -72,25 +74,42 @@ func Update(obj interface{}) error {
 	return nil
 }
 
-// converts an object to a type from typeMap
+func extractFields(obj interface{}) map[string]interface{} {
+	// Используем reflect.Indirect для получения значения структуры
+	val := reflect.Indirect(reflect.ValueOf(obj))
+
+	// Проверяем, что obj — это структура или указатель на структуру
+	if val.Kind() != reflect.Struct {
+		return nil // или можно возвращать пустую карту или ошибку
+	}
+	typ := val.Type()
+
+	var result = map[string]interface{}{}
+
+	// Проходим по полям структуры
+	for i := 0; i < val.NumField(); i++ {
+		result[typ.Field(i).Name] = val.Field(i).Interface()
+	}
+	return result
+}
+
+// Переводим объект в тип из TypeTable, который соответствует переданной таблице (в таблице users хранятся объекты типа User и т.д.)
 func convertObject(obj interface{}, tableName string) (interface{}, error) {
 	newType, ok := TypeTable[tableName]
 	if !ok {
 		return nil, fmt.Errorf("type %s not found in typeMap", tableName)
 	}
 
+	// Содержимое переменной
 	objValue := reflect.ValueOf(obj)
-	objType := objValue.Type()
-
-	if objType != newType {
-		if !newType.AssignableTo(objType) {
-			return nil, fmt.Errorf("type %s is not assignable to %s", newType, objType)
-		}
-
-		newObj := reflect.New(newType).Elem()
-		newObj.Set(objValue.Convert(newType))
-		return newObj.Interface(), nil
-	}
-
-	return obj, nil
+	t := reflect.TypeOf(obj)
+	fmt.Println("TYPE", t, obj)
+	// Если типы не равны и их нельзя привести друг к другу, возвращаем ошибку
+	// _, ok = obj.(newType)
+	// Указатель на новый объект типа newType
+	newObj := reflect.New(newType).Elem()
+	// Приводим значение objValue к типу newType и устанавливаем его в newObj. Проверка на совместимость была выше
+	newObj.Set(objValue.Convert(newType))
+	// Возвращаем тип интерфейса, чтобы можно было использовать в качестве объекта
+	return newObj.Interface(), nil
 }

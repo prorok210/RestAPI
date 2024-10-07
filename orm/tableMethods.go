@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
+	"unicode"
 )
 
-// Function to get all values ​​from the database
+// Функция получения всех значений из базы данных
 func (table *BaseTable) GetAll() error {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s;`, table.TableName)
 	rows, err := conn.Query(context.Background(), selectSQL)
@@ -16,15 +18,14 @@ func (table *BaseTable) GetAll() error {
 	}
 	defer rows.Close()
 
-	// We get a description of the fields (columns)
+	// Получаем описание полей (столбцов)
 	fieldDescriptions := rows.FieldDescriptions()
 
-	// Create a slice to save the values ​​of row
 	values := make([]interface{}, len(fieldDescriptions))
 	valuePtrs := make([]interface{}, len(fieldDescriptions))
 
 	for rows.Next() {
-		// Fill valuePtrs with pointers to values
+		// Заполняем valuePtrs указателями
 		for i := range fieldDescriptions {
 			valuePtrs[i] = &values[i]
 		}
@@ -46,13 +47,13 @@ func (table *BaseTable) GetAll() error {
 	return nil
 }
 
-// Fabric function to create objects based on TableName
+// Функция для создания объектов на основе TableName
 func (table *BaseTable) newModel(fields map[string]interface{}) (interface{}, error) {
 	if modelType, ok := TypeTable[table.TableName]; ok {
-		// Creating a new instance of the desired type
+		// Создание нового экземпляра нужного типа
 		model := reflect.New(modelType).Elem()
 
-		// Setting the value of the TableName field using reflection
+		// Установка значения поля TableName с помощью рефлексии
 		tableNameField := model.FieldByName("TableName")
 		if tableNameField.IsValid() && tableNameField.CanSet() {
 			tableNameField.SetString(table.TableName)
@@ -60,9 +61,9 @@ func (table *BaseTable) newModel(fields map[string]interface{}) (interface{}, er
 			return nil, fmt.Errorf("field TableName is invalid or cannot be set")
 		}
 
-		// Filling the model with data from fields
+		// Заполнение модели данными из полей
 		for fieldName, value := range fields {
-			fieldMeta, err := FindFieldByName(modelType, fieldName)
+			fieldMeta, err := findFieldByName(modelType, fieldName)
 			fmt.Println("field", fieldName, "fieldMeta: ", fieldMeta)
 			if err != nil {
 				return nil, fmt.Errorf("field %s not found in model %s: %v", fieldName, modelType.Name(), err)
@@ -115,7 +116,19 @@ func (table *BaseTable) newModel(fields map[string]interface{}) (interface{}, er
 	return nil, fmt.Errorf("model not found in tableRegistry map")
 }
 
-// Function to get a data by id
+// Функция для поиска поля независимо от регистра
+func findFieldByName(t reflect.Type, fieldName string) (reflect.StructField, error) {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if strings.EqualFold(field.Name, fieldName) {
+			fmt.Println(reflect.ValueOf(field))
+			return field, nil
+		}
+	}
+	return reflect.StructField{}, fmt.Errorf("field %s not found", fieldName)
+}
+
+// Функция для получения данных по id
 func (table *BaseTable) GetById(id int) (interface{}, error) {
 	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE id = $1;`, table.TableName) // Используем placeholder для безопасности
 	rows, err := conn.Query(context.Background(), selectSQL, id)
@@ -143,7 +156,7 @@ func (table *BaseTable) GetById(id int) (interface{}, error) {
 
 	// Итерируем по столбцам и значениям, записывая их в map
 	for i, fd := range fieldDescriptions {
-		columnName := CapitalizeFirstLetter(string(fd.Name))
+		columnName := сapitalizeFirstLetter(string(fd.Name))
 		result[columnName] = values[i]
 	}
 	fmt.Println("RESULT", result)
@@ -159,6 +172,19 @@ func (table *BaseTable) GetById(id int) (interface{}, error) {
 
 	// Возвращаем пользователя и nil как ошибку, если всё прошло успешно
 	// Дополнить, чтобы вместо obj возвращало obj.(*type) для возврата не интерфейса, а структуры на основе TableName
-	convertObject(obj, table.TableName)
+	obj, err = convertObject(obj, table.TableName)
+	if err != nil {
+		return nil, fmt.Errorf("error converting object: %v", err)
+	}
 	return obj, nil
+}
+
+// Делает первую букву заглавной
+func сapitalizeFirstLetter(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }
