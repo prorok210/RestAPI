@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // Function to get all values ​​from the database
@@ -47,7 +48,7 @@ func (table *BaseTable) GetAll() error {
 
 // Fabric function to create objects based on TableName
 func (table *BaseTable) newModel(fields map[string]interface{}) (interface{}, error) {
-	if modelType, ok := TableTypeMap[table.TableName]; ok {
+	if modelType, ok := TypeTable[table.TableName]; ok {
 		// Creating a new instance of the desired type
 		model := reflect.New(modelType).Elem()
 
@@ -55,14 +56,58 @@ func (table *BaseTable) newModel(fields map[string]interface{}) (interface{}, er
 		tableNameField := model.FieldByName("TableName")
 		if tableNameField.IsValid() && tableNameField.CanSet() {
 			tableNameField.SetString(table.TableName)
+		} else {
+			return nil, fmt.Errorf("field TableName is invalid or cannot be set")
 		}
 
 		// Filling the model with data from fields
 		for fieldName, value := range fields {
-			if fieldName == "Id" {
-				value = value.(int)
+			fieldMeta, err := FindFieldByName(modelType, fieldName)
+			fmt.Println("field", fieldName, "fieldMeta: ", fieldMeta)
+			if err != nil {
+				return nil, fmt.Errorf("field %s not found in model %s: %v", fieldName, modelType.Name(), err)
 			}
-			reflect.ValueOf(model).Elem().FieldByName(fieldName).Set(reflect.ValueOf(value))
+
+			field := model.FieldByName(fieldMeta.Name)
+
+			// Проверяем, что поле существует и его можно установить
+			if !field.IsValid() || !field.CanSet() {
+				return nil, fmt.Errorf("field %s is invalid or cannot be set", fieldName)
+			}
+
+			// Проверяем тип поля и значение, чтобы убедиться, что они совместимы
+			fieldType := reflect.TypeOf(field.Interface())
+			valueType := reflect.TypeOf(value)
+			if t, ok := value.(time.Time); ok {
+				// Если да, форматируем его по шаблону
+				value = t.Format("2006-01-02 15:04:05")
+				if strValue, ok := value.(string); ok {
+					// Успешно привели значение к строке
+					field.SetString(strValue)
+				} else {
+					return nil, fmt.Errorf("error converting time.Time to string")
+				}
+			} else {
+				valueValue := reflect.ValueOf(value)
+
+				// Проверка на возможность установки
+				if !valueValue.IsValid() {
+					return nil, fmt.Errorf("invalid value")
+				}
+
+				// Приведение типов
+				if valueType.ConvertibleTo(fieldType) {
+					// Преобразуем значение к типу поля и устанавливаем его
+					field.Set(valueValue.Convert(fieldType))
+				} else {
+					// Если типы не совместимы
+					return nil, fmt.Errorf("field %s type %s does not match value type %s", fieldName, fieldType, valueType)
+				}
+				// 	field.Set(reflect.ValueOf(value))
+			}
+
+			// Устанавливаем значение в поле
+			fmt.Println("Set field: ", field)
 		}
 
 		return model, nil
@@ -101,12 +146,11 @@ func (table *BaseTable) GetById(id int) (interface{}, error) {
 		columnName := CapitalizeFirstLetter(string(fd.Name))
 		result[columnName] = values[i]
 	}
-	fmt.Println(result)
+	fmt.Println("RESULT", result)
 	obj, err := table.newModel(result)
 	if err != nil {
 		return nil, fmt.Errorf("error creating model: %v", err)
 	}
-	fmt.Println(obj)
 
 	// Проверка на ошибки после завершения итерации
 	if rows.Err() != nil {

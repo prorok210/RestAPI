@@ -30,31 +30,12 @@ func InitDB() error {
 	return nil
 }
 
-func CreateTable(obj interface{}) error {
+func CreateTable(tableName string, obj interface{}) error {
 	data := reflect.TypeOf(obj)
-
-	var tableName string
-
-	// Checking the presence of the field
-	field, found := data.FieldByName("TableName")
-	if found {
-		// Getting the field value
-		userValue := reflect.ValueOf(obj)
-		fieldValue := userValue.FieldByName("TableName")
-
-		if fieldValue.IsValid() {
-			tableName = fieldValue.String()
-
-			fmt.Printf("Field '%s' was found in the structure. Value: %s\n", field.Name, tableName)
-		} else {
-			return fmt.Errorf("field '%s' was found, but its value is not available", field.Name)
-		}
-	} else {
-		return fmt.Errorf("field 'TableName' was not found in the structure")
-	}
 
 	// Checking a table exists or not
 	var exists bool
+
 	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=$1);"
 	err := conn.QueryRow(context.Background(), query, tableName).Scan(&exists)
 
@@ -63,7 +44,7 @@ func CreateTable(obj interface{}) error {
 	}
 
 	if exists {
-		fmt.Println("Table already exists.")
+		fmt.Printf("Table %s already exists.", tableName)
 		return nil
 	}
 
@@ -110,9 +91,8 @@ func CreateTable(obj interface{}) error {
 
 // Function for checking the similarity of tables in database and structures
 func CheckTables() error {
-	for tableName, modelType := range TableTypeMap {
+	for tableName, modelType := range TypeTable {
 		fmt.Printf("Checking table %s...\n", tableName)
-		fmt.Println("modelType", modelType)
 
 		// Getting the current table structure from the database
 		dbColumns, err := getTableColumns(tableName)
@@ -222,7 +202,6 @@ func getModelColumns(modelType reflect.Type) (map[string]map[string]string, erro
 
 		// Get orm tags
 		ormTag := strings.ToLower(field.Tag.Get("orm"))
-		fmt.Println("ormTag", ormTag)
 		if ormTag != "" {
 			// every attribute is separated by a space
 			ormTagSlice := strings.Split(ormTag, " ")
@@ -290,7 +269,7 @@ func compareColumns(dbColumns, modelColumns map[string]map[string]string) (bool,
 				}
 			}
 			if value != valueModel[key] {
-				return false, fmt.Errorf("column %s does not match the model, db: %s and model: %s", key, value, valueModel[key])
+				return false, fmt.Errorf(`in column "%s" %s does not match the model, db: %s and model: %s`, valueModel["column_name"], key, value, valueModel[key])
 			}
 		}
 	}

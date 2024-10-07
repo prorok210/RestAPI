@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	TableTypeMap = map[string]reflect.Type{
+	TypeTable = map[string]reflect.Type{
 		/*
 			Регистрация таблиц
 			"<tablename>":    reflect.TypeOf(<ModelStructName>),
@@ -27,10 +27,10 @@ func RegisterModel(tableName string, obj interface{}) error {
 	if v.Kind() != reflect.Struct {
 		return fmt.Errorf("object %v is not a struct", v)
 	}
-	TableTypeMap[tableName] = reflect.TypeOf(obj)
+	TypeTable[tableName] = reflect.TypeOf(obj)
 
 	constructor := func(tableName string) interface{} {
-		objValue := reflect.New(TableTypeMap[tableName])
+		objValue := reflect.New(TypeTable[tableName])
 		obj := objValue.Elem()
 		obj.FieldByName("TableName").SetString(tableName)
 		return &obj

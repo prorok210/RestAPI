@@ -19,7 +19,7 @@ type User struct {
 	TableName string
 	ID        int    `json:"id" orm:"serial_primary_key"`
 	Mobile    string `json:"mobile" orm:"varchar unique not_null"`
-	Otp       string `json:"otp" orm:"int"`
+	Otp       string `json:"otp" orm:"varchar"`
 	IsActive  bool   `orm:"bool not_null"`
 	Name      string `json:"name" orm:"varchar"`
 	Surname   string `json:"surname" orm:"varchar"`

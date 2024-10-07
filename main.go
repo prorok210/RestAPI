@@ -5,6 +5,7 @@ import (
 	"RestAPI/core"
 	"RestAPI/db"
 	"RestAPI/orm"
+	"fmt"
 	"log"
 )
 
@@ -29,6 +30,14 @@ func main() {
 		log.Println("Error inittializing DB", er)
 		return
 	}
+
+	users := orm.BaseTable{TableName: "users"}
+	user, er := users.GetById(2)
+	if er != nil {
+		log.Println("Error getting user", er)
+		return
+	}
+	fmt.Println(user)
 
 	app.InitHandlers()
 

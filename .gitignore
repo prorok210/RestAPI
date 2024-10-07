@@ -6,4 +6,4 @@
 .o
 .vscode
 media
-core/settings.go
+core/setting.go

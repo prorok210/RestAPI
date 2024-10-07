@@ -9,7 +9,6 @@ import (
 
 // Function for creating a new table object based on obj.TableName
 func Create(obj interface{}) error {
-	fmt.Println("CREATE", obj)
 	// Getting the fields and their values
 	values, columns := ExtractFields(obj)
 	// Removing a column "TableName" and Id
@@ -75,7 +74,7 @@ func Update(obj interface{}) error {
 
 // converts an object to a type from typeMap
 func convertObject(obj interface{}, tableName string) (interface{}, error) {
-	newType, ok := TableTypeMap[tableName]
+	newType, ok := TypeTable[tableName]
 	if !ok {
 		return nil, fmt.Errorf("type %s not found in typeMap", tableName)
 	}
